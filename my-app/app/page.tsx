@@ -81,6 +81,7 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
 };
 
 const handlePasswordReset = async (email: string) => {
+  setIsLoading(true);
   try {
     const res = await fetch('/api/auth/reset', {
       method: 'POST',
@@ -89,11 +90,21 @@ const handlePasswordReset = async (email: string) => {
     });
 
     const data = await res.json();
-    alert(data.message);
+
+    if (!res.ok) {
+      alert(data.error || "Failed to request password reset.");
+      return;
+    }
+
+    alert(`${data.message}\n(Check console for preview URL)`);
   } catch (error) {
     console.error(error);
+    alert("Something went wrong. Check console.");
+  } finally {
+    setIsLoading(false);
   }
 };
+
 
 
     // Project/Team actions just log the action
@@ -193,7 +204,7 @@ const handlePasswordReset = async (email: string) => {
 
     // --- 2. Auth Page Component (Signup/Login) ---
     const AuthView = () => {
-        const [isRegistering, setIsRegistering] = useState(true);
+        const [isRegistering, setIsRegistering] = useState(false);
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
         const [error, setError] = useState('');
