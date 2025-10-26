@@ -23,6 +23,15 @@ export default function Page() {
     const [view, setView] = useState<'home' | 'auth' | 'dashboard' | 'review' | 'rating' | 'report'>('home');
     const [isLoading, setIsLoading] = useState(false); // No network loading required
 
+        // --- Add this useEffect to restore logged-in user ---
+        useEffect(() => {
+          const savedUser = localStorage.getItem('peerEvalUser');
+          if (savedUser) {
+              setUserId(savedUser);
+              setView('dashboard'); // automatically go to dashboard if user exists
+          }
+      }, []);
+
     // --- Mock Data States (For future functionality) ---
     const [projects, setProjects] = useState<any[]>([]); 
     const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -41,20 +50,51 @@ export default function Page() {
     // --- Simulated Functions (Strictly Frontend) ---
     
     // Auth actions now just mock the state change
-    const handleAuthAction = (action: 'register' | 'login') => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            setUserId(MOCK_UID); // Mocks a successful login/registration
-            setView('dashboard');
-            console.log(`Action: ${action} successful. Logged in with mock UID.`);
-        }, 800);
-    };
 
-    const handlePasswordReset = (email: string) => {
-        alert(`Password reset request submitted for ${email}. Check console for mock log.`);
-        console.log(`Password reset requested for: ${email}`);
-    };
+    // Inside Page()
+
+const handleAuthAction = async (action: 'register' | 'login', email?: string, password?: string) => {
+  setIsLoading(true);
+  try {
+    const res = await fetch(`/api/auth/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Authentication failed');
+      return;
+    }
+
+    setUserId(data.userId);
+    localStorage.setItem('peerEvalUser', data.userId);
+    setView('dashboard');
+    console.log(`${action} successful for UID: ${data.userId}`);
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handlePasswordReset = async (email: string) => {
+  try {
+    const res = await fetch('/api/auth/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await res.json();
+    alert(data.message);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 
     // Project/Team actions just log the action
     const handleCreateProject = (title: string) => {
@@ -168,7 +208,7 @@ export default function Page() {
             }
 
             // Call mock auth action
-            handleAuthAction(isRegistering ? 'register' : 'login');
+            handleAuthAction(isRegistering ? 'register' : 'login', email, password);
         };
         
         const handleResetClick = () => {
