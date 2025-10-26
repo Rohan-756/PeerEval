@@ -326,7 +326,6 @@ const handlePasswordReset = async (email: string) => {
     // --- Main Renderer ---
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
-            <script src="https://cdn.tailwindcss.com"></script>
             <Header />
             <main>
                 {view === 'home' && <HomePage />}

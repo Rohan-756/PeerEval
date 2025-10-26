@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
                     placeholder="New password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full p-3 mb-4 border rounded-lg"
+                    className="w-full p-3 mb-4 border rounded-lg text-slate-700"
                 />
                 <button
                     type="submit"

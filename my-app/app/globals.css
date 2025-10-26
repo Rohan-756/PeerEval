@@ -1,5 +1,7 @@
 /* globals.css */
 
+@import "tailwindcss";
+
 /* Import Tailwind base, components, and utilities */
 @tailwind base;
 @tailwind components;
