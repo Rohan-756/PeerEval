@@ -22,6 +22,7 @@ export default function Page() {
     // Initial view set to 'home'
     const [view, setView] = useState<'home' | 'auth' | 'dashboard' | 'review' | 'rating' | 'report'>('home');
     const [isLoading, setIsLoading] = useState(false); // No network loading required
+    const [role, setRole] = useState<'student' | 'instructor'>('student');
 
         // --- Add this useEffect to restore logged-in user ---
         useEffect(() => {
@@ -55,13 +56,13 @@ export default function Page() {
 
     // Inside Page()
 
-const handleAuthAction = async (action: 'register' | 'login', email?: string, password?: string) => {
+const handleAuthAction = async (action: 'register' | 'login', email?: string, password?: string, role?: string) => {
   setIsLoading(true);
   try {
     const res = await fetch(`/api/auth/${action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
 
     const data = await res.json();
@@ -154,7 +155,7 @@ const handlePasswordReset = async (email: string) => {
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center text-sm font-medium text-gray-600 rounded-full bg-indigo-100 px-3 py-1">
                         <User className="w-4 h-4 mr-2" />
-                        UID: {userId.substring(0, 8)}... (MOCK)
+                        UID: {userId.substring(0, 8)}...
                     </div>
                     <button
                         onClick={() => { setCurrentProjectId(null); setView('dashboard'); }}
@@ -265,6 +266,34 @@ const handlePasswordReset = async (email: string) => {
                                 {error}
                             </div>
                         )}
+                        {isRegistering && <div className="mb-4">
+                        <span className="block text-gray-700 text-sm font-semibold mb-2">Role</span>
+                        <div className="flex space-x-4">
+                          <button
+                            type="button"
+                            onClick={() => setRole('student')}
+                            className={`px-4 py-2 rounded-full font-semibold transition ${
+                              role === 'student'
+                                ? 'bg-indigo-500 text-white shadow-lg'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-indigo-100'
+                            }`}
+                          >
+                            Student
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRole('instructor')}
+                            className={`px-4 py-2 rounded-full font-semibold transition ${
+                              role === 'instructor'
+                                ? 'bg-indigo-500 text-white shadow-lg'
+                                : 'bg-white border border-gray-300 text-gray-700 hover:bg-indigo-100'
+                            }`}
+                          >
+                            Instructor
+                          </button>
+                        </div>
+                      </div>}
+
                         <button
                             type="submit"
                             disabled={isLoading}
