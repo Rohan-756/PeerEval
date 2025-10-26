@@ -40,12 +40,14 @@ export default function Page() {
 
     // --- Simulated Logout Handler ---
     const handleLogout = () => {
-        setUserId(null);
-        setCurrentProjectId(null);
-        setProjects([]);
-        setView('home');
-        console.log("Logged out. State reset.");
-    };
+      setUserId(null);
+      setCurrentProjectId(null);
+      setProjects([]);
+      localStorage.removeItem('peerEvalUser'); // <-- add this
+      setView('home');
+      console.log("Logged out. State reset.");
+  };
+  
 
     // --- Simulated Functions (Strictly Frontend) ---
     
