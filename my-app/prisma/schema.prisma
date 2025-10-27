@@ -16,35 +16,38 @@ model User {
   tokenExpiry        DateTime?
   role               String    @default("student") // "student" or "instructor"
 
-  // Projects created by the instructor
+  // Projects created by this instructor
   projects Project[] @relation("InstructorProjects")
 
-  // Invites received by the student
-  invites Invite[] @relation("StudentInvites")
+  // Invites received by this student
+  invites  Invite[]  @relation("StudentInvites")
 }
 
 model Project {
-  id          String @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
 
-  instructor   User   @relation("InstructorProjects", fields: [instructorId], references: [id])
+  instructor   User      @relation("InstructorProjects", fields: [instructorId], references: [id])
   instructorId String
 
-  // Invites sent for this project
-  invites Invite[] @relation("ProjectInvites")
+  // Just a plain relation — no cascade needed here
+  invites      Invite[]  @relation("ProjectInvites")
 
-  createdAt DateTime @default(now())
+  createdAt    DateTime  @default(now())
 }
 
 model Invite {
-  id        String  @id @default(cuid())
-  project   Project @relation("ProjectInvites", fields: [projectId], references: [id])
-  projectId String
+  id         String   @id @default(cuid())
 
-  student   User   @relation("StudentInvites", fields: [studentId], references: [id])
-  studentId String
+  // ✅ Cascade delete rule — only define it on the child side
+  project    Project  @relation("ProjectInvites", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId  String
 
-  status    String   @default("pending") // pending | accepted | rejected
-  createdAt DateTime @default(now())
+  // ✅ Cascade delete if student is removed
+  student    User     @relation("StudentInvites", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId  String
+
+  status     String   @default("pending") // pending | accepted | rejected
+  createdAt  DateTime @default(now())
 }
