@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Dashboard from "../components/Dashboard";
 import { LogIn, User, Users } from "lucide-react";
+import StudentDashboard from "./StudentDashboard";
+import InstructorDashboard from "./InstructorDashboard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function DashboardPage() {
       router.push("/auth");
       return;
     }
+
     try {
       const parsed = JSON.parse(saved);
       if (parsed?.id) setUser(parsed);
@@ -28,16 +30,16 @@ export default function DashboardPage() {
     router.push("/");
   };
 
-  if (!user) {
+  if (!user)
     return (
       <div className="flex justify-center items-center h-screen text-gray-500">
         Loading dashboard...
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Header */}
       <header className="flex justify-between items-center p-4 bg-white border-b shadow-md sticky top-0 z-10">
         <h1
           onClick={() => router.push("/dashboard")}
@@ -45,6 +47,7 @@ export default function DashboardPage() {
         >
           PeerEval
         </h1>
+
         <div className="flex items-center space-x-4">
           <div className="flex items-center text-sm font-medium text-gray-600 rounded-full bg-indigo-100 px-3 py-1">
             <User className="w-4 h-4 mr-2" />
@@ -65,7 +68,12 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <Dashboard user={user} />
+      {/* Role-based dashboard */}
+      {user.role === "student" ? (
+        <StudentDashboard user={user} />
+      ) : (
+        <InstructorDashboard user={user} />
+      )}
     </div>
   );
 }
