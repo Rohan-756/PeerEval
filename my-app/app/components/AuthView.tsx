@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import Header from "./Header";
 
-export default function AuthView({handlePasswordReset, setView, setIsLoading, setUser }: any) {
+export default function AuthView({handlePasswordReset, setView, setIsLoading, setUser, onAuthSuccess }: any) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,9 +43,8 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
     setUser((prev: any) => ({ ...prev, ...fullUser }));
 
     // store full user object as JSON so reload picks it up immediately
-    localStorage.setItem('peerEvalUser', JSON.stringify(fullUser));
-
-    setView('dashboard');
+    sessionStorage.setItem('peerEvalUser', JSON.stringify(fullUser));
+    if (onAuthSuccess) onAuthSuccess();    
   } catch (err) {
     console.error(err);
   } finally {
@@ -54,6 +54,9 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
 
 
   return (
+    <>
+    <Header user={{id:'', email:'', role:'student'}} onLogout={()=>{}}/>
+
     <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gray-100">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-indigo-200">
         <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">
@@ -139,5 +142,6 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
         </div>
       </div>
     </div>
+    </>
   );
 }

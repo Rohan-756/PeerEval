@@ -9,7 +9,7 @@ interface User {
 }
 
 interface DashboardProps {
-  user?: User; // optional, loaded from props or localStorage
+  user?: User; // optional, loaded from props or sessionStorage
 }
 
 interface Project {
@@ -36,11 +36,11 @@ export default function Dashboard({ user: initialUser }: DashboardProps) {
   const [description, setDescription] = useState('');
   const [studentEmails, setStudentEmails] = useState<Record<string, string>>({});
 
-  // ✅ Load user from localStorage if not provided
+  // ✅ Load user from sessionStorage if not provided
   useEffect(() => {
     if (!initialUser) {
       try {
-        const stored = localStorage.getItem('peerEvalUser');
+        const stored = sessionStorage.getItem('peerEvalUser');
         if (stored) {
           const parsed: User = JSON.parse(stored);
           if (parsed.id && parsed.email && parsed.role) {
@@ -48,7 +48,7 @@ export default function Dashboard({ user: initialUser }: DashboardProps) {
           }
         }
       } catch (err) {
-        console.error('Failed to parse user from localStorage', err);
+        console.error('Failed to parse user from sessionStorage', err);
       }
     }
   }, [initialUser]);
