@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"  // or "sqlite" if you prefer
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -8,12 +8,43 @@ generator client {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  email              String   @unique
+  id                 String    @id @default(cuid())
+  email              String    @unique
   password           String
   name               String?
-  passwordResetToken String?  // NEW
-  tokenExpiry        DateTime? // NEW
-  role               String   @default("student") // "student" or "instructor"
+  passwordResetToken String?
+  tokenExpiry        DateTime?
+  role               String    @default("student") // "student" or "instructor"
+
+  // Projects created by the instructor
+  projects Project[] @relation("InstructorProjects")
+
+  // Invites received by the student
+  invites Invite[] @relation("StudentInvites")
 }
 
+model Project {
+  id          String @id @default(cuid())
+  title       String
+  description String
+
+  instructor   User   @relation("InstructorProjects", fields: [instructorId], references: [id])
+  instructorId String
+
+  // Invites sent for this project
+  invites Invite[] @relation("ProjectInvites")
+
+  createdAt DateTime @default(now())
+}
+
+model Invite {
+  id        String  @id @default(cuid())
+  project   Project @relation("ProjectInvites", fields: [projectId], references: [id])
+  projectId String
+
+  student   User   @relation("StudentInvites", fields: [studentId], references: [id])
+  studentId String
+
+  status    String   @default("pending") // pending | accepted | rejected
+  createdAt DateTime @default(now())
+}

@@ -24,31 +24,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if the user already exists
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (user) {
-      // User already exists, return existing UID and role
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (existingUser) {
       return NextResponse.json({
         message: 'User already exists',
-        userId: user.id,
-        role: user.role,
+        userId: existingUser.id,
+        role: existingUser.role,
       });
     }
 
-    // Hash the password and create new user with role
+    // Hash password and create user
     const hashedPassword = await bcrypt.hash(password, 10);
-    user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role, // Save role permanently
-      },
+    const newUser = await prisma.user.create({
+      data: { email, password: hashedPassword, role },
     });
 
     return NextResponse.json({
       message: 'User registered',
-      userId: user.id,
-      role: user.role,
+      userId: newUser.id,
+      role: newUser.role,
     });
 
   } catch (err) {
