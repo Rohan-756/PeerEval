@@ -7,17 +7,34 @@ import { useRouter } from 'next/navigation';
 import { UserType } from './types';
 
 interface HeaderProps {
-  user: UserType | null;
-  onLogout: () => void;
+  user?: UserType | null;
+  onLogout?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ user: propUser, onLogout }) => {
   const router = useRouter();
+  const [user, setUser] = React.useState<UserType | null>(propUser ?? null);
+
+  React.useEffect(() => {
+    if (!propUser) {
+      try {
+        const storedUser = sessionStorage.getItem('peerEvalUser');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        }
+      } catch (err) {
+        console.error('Failed to parse user from sessionStorage:', err);
+      }
+    }
+  }, [propUser]);
 
   const handleLogoClick = () => {
+    console.log('Logo clicked');
     if (user?.id) router.push('/dashboard');
     else router.push('/');
   };
+ 
 
   return (
     <header className="flex justify-between items-center p-4 bg-white border-b shadow-md sticky top-0 z-10">
@@ -36,13 +53,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
             <User className="w-4 h-4 mr-2" />
             UID: {user.id.substring(0, 8)}...
           </div>
-
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition flex items-center"
-          >
-            <Users className="w-5 h-5 inline mr-1" /> Dashboard
-          </button>
 
           <button
             onClick={onLogout}

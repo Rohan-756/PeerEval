@@ -1,7 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function InstructorDashboard({ user }: { user: any }) {
+
+  const router = useRouter();
+  
   const [projects, setProjects] = useState<any[]>([]);
   const [newProject, setNewProject] = useState({ title: "", description: "" });
   const [inviteEmail, setInviteEmail] = useState("");
@@ -181,11 +185,11 @@ export default function InstructorDashboard({ user }: { user: any }) {
             {projects.map((p) => (
               <li
                 key={p.id}
-                className={`p-4 border rounded-lg flex justify-between items-center transition ${
-                  selectedProjectId === p.id
+                onClick={() => router.push(`/projects/${p.id}`)}
+                className={`p-4 border rounded-lg flex justify-between items-center transition cursor-pointer ${selectedProjectId === p.id
                     ? "border-indigo-400 bg-indigo-50"
-                    : "border-gray-200"
-                }`}
+                    : "border-gray-200 hover:bg-gray-50"
+                  }`}
               >
                 <div>
                   <h4 className="font-semibold text-gray-800">{p.title}</h4>
@@ -194,14 +198,19 @@ export default function InstructorDashboard({ user }: { user: any }) {
                 <div className="flex items-center gap-4">
                   <button
                     className="text-indigo-600 font-medium hover:underline"
-                    onClick={() => setSelectedProjectId(p.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProjectId(p.id);
+                    }}
                   >
                     {selectedProjectId === p.id ? "Selected" : "Select"}
                   </button>
 
-                  {/* 🆕 Delete Button */}
                   <button
-                    onClick={() => handleDeleteProject(p.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteProject(p.id);
+                    }}
                     disabled={isLoading}
                     className="text-red-600 hover:text-red-800 font-medium"
                   >

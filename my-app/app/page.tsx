@@ -8,7 +8,7 @@ export default function HomePage() {
 
   return (
     <>
-    <Header user={{id:'', email:'', role:'student'}} onLogout={()=>{}}/>
+    <Header/>
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-gray-50 p-8">
       <div className="text-center w-full max-w-2xl bg-white p-12 rounded-2xl shadow-2xl border border-indigo-100">
         <HomeIcon className="w-16 h-16 mx-auto text-indigo-500 mb-6" />

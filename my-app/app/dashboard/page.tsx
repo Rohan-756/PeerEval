@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { LogIn, User, Users } from "lucide-react";
 import StudentDashboard from "./StudentDashboard";
 import InstructorDashboard from "./InstructorDashboard";
+import Header from "../components/Header";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -40,34 +41,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
-      <header className="flex justify-between items-center p-4 bg-white border-b shadow-md sticky top-0 z-10">
-        <h1
-          onClick={() => router.push("/dashboard")}
-          className="text-3xl font-bold text-indigo-700 cursor-pointer"
-        >
-          PeerEval
-        </h1>
-
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center text-sm font-medium text-gray-600 rounded-full bg-indigo-100 px-3 py-1">
-            <User className="w-4 h-4 mr-2" />
-            {user.email}
-          </div>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition flex items-center"
-          >
-            <Users className="w-5 h-5 inline mr-1" /> Dashboard
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center text-sm font-medium text-red-600 hover:text-red-800 transition"
-          >
-            <LogIn className="w-5 h-5 mr-1" /> Logout
-          </button>
-        </div>
-      </header>
-
+      <Header/>
       {/* Role-based dashboard */}
       {user.role === "student" ? (
         <StudentDashboard user={user} />
