@@ -80,12 +80,13 @@ export default function InstructorDashboard({ user }: { user: any }) {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/projects/invite", {
+      const res = await fetch("/api/invites/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectId: selectedProjectId,
           studentEmail: inviteEmail,
+          instructorId: user.id,
         }),
       });
 
