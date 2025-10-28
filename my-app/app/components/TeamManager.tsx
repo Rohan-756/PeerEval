@@ -53,8 +53,12 @@ export default function TeamManager({ projectId, invites, existingTeams }: TeamM
         body: JSON.stringify({ projectId, studentIds: draft }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create team");
-
+  
+      if (!res.ok) {
+        alert(`❌ ${data.error || "Failed to create team"}`);
+        return;
+      }
+  
       setTeams((prev) => [...prev, data]);
       setDraft([]);
       alert("✅ Team created successfully!");
@@ -65,6 +69,7 @@ export default function TeamManager({ projectId, invites, existingTeams }: TeamM
       setLoading(false);
     }
   };
+  
 
   // ✅ Fix: check invite.status, not student.status
   const acceptedInvites = invites.filter((i) => i.status === "accepted");
