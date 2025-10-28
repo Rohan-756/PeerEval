@@ -1,8 +1,13 @@
-"use client";
+"use client"
+
 import React, { useState } from "react";
 import Header from "./Header";
+import { useRouter} from "next/navigation"
 
 export default function AuthView({handlePasswordReset, setView, setIsLoading, setUser, onAuthSuccess }: any) {
+  
+  const router = useRouter();
+
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -134,7 +139,7 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
           )}
 
           <button
-            onClick={() => setView("home")}
+            onClick={() => {router.push("/")}}
             className="text-gray-500 hover:text-gray-700 font-medium"
           >
             &larr; Back to Home

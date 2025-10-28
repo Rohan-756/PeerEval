@@ -7,6 +7,8 @@ export default function AuthPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [view, setView] = useState("auth");
+
 
   // Redirect to dashboard if user already logged in
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function AuthPage() {
       setIsLoading={setIsLoading}
       setUser={setUser}
       onAuthSuccess={() => router.push("/dashboard")}
+      setView={setView}
     />
   );
 }
