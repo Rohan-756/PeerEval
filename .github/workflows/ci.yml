@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: my-app
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,7 +31,3 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-
-      # (Optional) run tests later
-      # - name: Run tests
-      #   run: npm test
