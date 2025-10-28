@@ -21,6 +21,9 @@ model User {
 
   // Invites received by this student
   invites  Invite[]  @relation("StudentInvites")
+
+  // 👇 add back relation to TeamMember
+  teamMemberships TeamMember[]
 }
 
 model Project {
@@ -31,8 +34,10 @@ model Project {
   instructor   User      @relation("InstructorProjects", fields: [instructorId], references: [id])
   instructorId String
 
-  // Just a plain relation — no cascade needed here
   invites      Invite[]  @relation("ProjectInvites")
+
+  // 👇 add back relation to Team
+  teams        Team[]
 
   createdAt    DateTime  @default(now())
 }
@@ -40,14 +45,29 @@ model Project {
 model Invite {
   id         String   @id @default(cuid())
 
-  // ✅ Cascade delete rule — only define it on the child side
   project    Project  @relation("ProjectInvites", fields: [projectId], references: [id], onDelete: Cascade)
   projectId  String
 
-  // ✅ Cascade delete if student is removed
   student    User     @relation("StudentInvites", fields: [studentId], references: [id], onDelete: Cascade)
   studentId  String
 
   status     String   @default("pending") // pending | accepted | rejected
   createdAt  DateTime @default(now())
+}
+
+model Team {
+  id         String    @id @default(cuid())
+  name       String
+  project    Project   @relation(fields: [projectId], references: [id])
+  projectId  String
+  members    TeamMember[]
+  createdAt  DateTime  @default(now())
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  team      Team     @relation(fields: [teamId], references: [id])
+  teamId    String
+  student   User     @relation(fields: [studentId], references: [id])
+  studentId String
 }
