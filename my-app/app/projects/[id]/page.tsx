@@ -33,7 +33,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       },
       teams: {
         include: {
-          members: { include: { student: { select: { name: true, email: true } } } },
+          members: {
+            include: { student: { select: { name: true, email: true } } },
+          },
         },
       },
     },
@@ -71,7 +73,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <p className="text-gray-500">No students invited yet.</p>
           ) : (
             <ul className="space-y-2">
-              {project.invites.map((invite) => (
+              {project.invites.map((invite: Invite) => (   // ✅ Added explicit type here
                 <li
                   key={invite.student.id}
                   className="flex justify-between items-center border-b pb-2 text-gray-700"
