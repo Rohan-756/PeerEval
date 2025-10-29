@@ -18,8 +18,18 @@ export async function POST(req: Request) {
       include: { student: { select: { email: true } } },
     });
 
+    // Define the type of each element in existingMembers explicitly
+    type ExistingMember = {
+      student: {
+        email: string;
+      };
+    };
+
     if (existingMembers.length > 0) {
-      const alreadyInTeams = existingMembers.map((m) => m.student.email).join(", ");
+      const alreadyInTeams = existingMembers
+        .map((m: ExistingMember) => m.student.email)
+        .join(", ");
+
       return NextResponse.json(
         { error: `Some students are already in a team: ${alreadyInTeams}` },
         { status: 400 }
