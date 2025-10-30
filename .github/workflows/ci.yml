@@ -23,9 +23,11 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
+        working-directory: ./my-app
         run: npm install
 
       - name: Build Project
+        working-directory: ./my-app
         run: npm run build
 
   test:
