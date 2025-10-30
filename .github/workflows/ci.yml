@@ -8,17 +8,21 @@ on:
     branches:
       - main
 
+# 🌍 Global environment variables shared across all jobs
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+  SMTP_HOST: ${{ secrets.SMTP_HOST }}
+  SMTP_PORT: ${{ secrets.SMTP_PORT }}
+  SMTP_USER: ${{ secrets.SMTP_USER }}
+  SMTP_PASS: ${{ secrets.SMTP_PASS }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
 jobs:
+  # 🏗️ BUILD STAGE
   build:
     name: Build Stage
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-      SMTP_HOST: ${{ secrets.SMTP_HOST }}
-      SMTP_PORT: ${{ secrets.SMTP_PORT }}
-      SMTP_USER: ${{ secrets.SMTP_USER }}
-      SMTP_PASS: ${{ secrets.SMTP_PASS }}
     defaults:
       run:
         working-directory: ./my-app
@@ -32,7 +36,6 @@ jobs:
         with:
           node-version: 20
 
-      # Install dependencies (Prisma will now have DATABASE_URL)
       - name: Install Dependencies
         run: npm ci
 
@@ -42,6 +45,7 @@ jobs:
       - name: Build Project
         run: npm run build
 
+  # 🧪 TEST STAGE
   test:
     name: Test Stage
     runs-on: ubuntu-latest
@@ -62,6 +66,7 @@ jobs:
       - name: Run Tests
         run: npm test -- --json --outputFile=test-results.json || echo "No tests defined"
 
+  # 📊 COVERAGE STAGE
   coverage:
     name: Coverage Stage
     runs-on: ubuntu-latest
@@ -82,6 +87,7 @@ jobs:
       - name: Run Coverage
         run: npm run test -- --coverage --coverageReporters="text-summary" || echo "Coverage not available"
 
+  # 🧹 LINT STAGE
   lint:
     name: Lint Stage
     runs-on: ubuntu-latest
@@ -102,6 +108,7 @@ jobs:
       - name: Run Linter
         run: npx eslint . || true
 
+  # 🔒 SECURITY SCAN STAGE
   security:
     name: Security Scan Stage
     runs-on: ubuntu-latest
@@ -116,6 +123,7 @@ jobs:
       - name: Run Security Scan
         run: npm audit || true
 
+  # 🚀 DEPLOY STAGE
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
@@ -136,10 +144,8 @@ jobs:
 
       - name: Build with Vercel
         run: |
-          vercel build --prod \
-            --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
         run: |
-          vercel deploy --prebuilt --prod \
-            --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
