@@ -26,7 +26,7 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -43,6 +43,15 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
 
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            my-app/.next
+            my-app/package.json
+            my-app/README.md
+
   test:
     name: Test Stage
     runs-on: ubuntu-latest
@@ -58,7 +67,7 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Tests
         run: npm test -- --json --outputFile=test-results.json || echo "No tests defined"
@@ -84,7 +93,7 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Coverage
         run: npm run test -- --coverage --coverageReporters="html" || echo "Coverage not available"
@@ -110,7 +119,7 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Linter
         run: npx eslint . --format json --output-file lint-report.json || true
@@ -151,6 +160,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: my-app
 
       - name: Create Artifact Folder
         run: mkdir -p build-artifact/reports
