@@ -1,3 +1,6 @@
+// ==========================
+// 📦 DATABASE CONFIGURATION
+// ==========================
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -7,6 +10,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ==========================
+// 👤 USER MODEL
+// ==========================
 model User {
   id                 String    @id @default(cuid())
   email              String    @unique
@@ -20,54 +26,99 @@ model User {
   projects Project[] @relation("InstructorProjects")
 
   // Invites received by this student
-  invites  Invite[]  @relation("StudentInvites")
+  invites Invite[] @relation("StudentInvites")
 
-  // 👇 add back relation to TeamMember
+  // Teams where this student is a member
   teamMemberships TeamMember[]
+
+  // Surveys created by this instructor
+  surveys Survey[] @relation("InstructorSurveys")
 }
 
+// ==========================
+// 📁 PROJECT MODEL
+// ==========================
 model Project {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
 
-  instructor   User      @relation("InstructorProjects", fields: [instructorId], references: [id])
+  instructor   User     @relation("InstructorProjects", fields: [instructorId], references: [id])
   instructorId String
 
-  invites      Invite[]  @relation("ProjectInvites")
+  invites Invite[] @relation("ProjectInvites")
 
-  // 👇 add back relation to Team
-  teams        Team[]
+  // Teams under this project
+  teams Team[]
 
-  createdAt    DateTime  @default(now())
+  // Surveys for this project
+  surveys Survey[] @relation("ProjectSurveys")
+
+  createdAt DateTime @default(now())
 }
 
+// ==========================
+// 💌 INVITE MODEL
+// ==========================
 model Invite {
-  id         String   @id @default(cuid())
-
-  project    Project  @relation("ProjectInvites", fields: [projectId], references: [id], onDelete: Cascade)
-  projectId  String
-
-  student    User     @relation("StudentInvites", fields: [studentId], references: [id], onDelete: Cascade)
-  studentId  String
-
-  status     String   @default("pending") // pending | accepted | rejected
-  createdAt  DateTime @default(now())
-}
-
-model Team {
-  id         String    @id @default(cuid())
-  name       String
-  project    Project   @relation(fields: [projectId], references: [id])
-  projectId  String
-  members    TeamMember[]
-  createdAt  DateTime  @default(now())
-}
-
-model TeamMember {
   id        String   @id @default(cuid())
-  team      Team     @relation(fields: [teamId], references: [id])
-  teamId    String
-  student   User     @relation(fields: [studentId], references: [id])
+  project   Project  @relation("ProjectInvites", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  student   User     @relation("StudentInvites", fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
+  status    String   @default("pending") // pending | accepted | rejected
+  createdAt DateTime @default(now())
+}
+
+// ==========================
+// 👥 TEAM MODEL
+// ==========================
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  project   Project      @relation(fields: [projectId], references: [id])
+  projectId String
+  members   TeamMember[]
+  createdAt DateTime     @default(now())
+}
+
+// ==========================
+// 🧍 TEAM MEMBER MODEL
+// ==========================
+model TeamMember {
+  id        String @id @default(cuid())
+  team      Team   @relation(fields: [teamId], references: [id])
+  teamId    String
+  student   User   @relation(fields: [studentId], references: [id])
+  studentId String
+}
+
+// ==========================
+// 📝 SURVEY MODEL
+// ==========================
+model Survey {
+  id        String   @id @default(cuid())
+  title     String
+  
+  // Relations
+  project   Project  @relation("ProjectSurveys", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  instructor   User     @relation("InstructorSurveys", fields: [instructorId], references: [id], onDelete: Cascade)
+  instructorId String
+
+  // Survey criteria
+  criteria  Criterion[]
+  
+  createdAt DateTime @default(now())
+}
+
+// ==========================
+// 📊 CRITERION MODEL
+// ==========================
+model Criterion {
+  id       String @id @default(cuid())
+  text     String
+  survey   Survey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId String
 }
