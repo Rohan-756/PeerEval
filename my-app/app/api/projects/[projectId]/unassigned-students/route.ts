@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { projectId: string } }
+  req: NextRequest,
+  context: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = params;
+    const { projectId } = await context.params; // await the promise
 
     if (!projectId) {
       return NextResponse.json(
@@ -15,18 +15,14 @@ export async function GET(
       );
     }
 
-    // This is the optimal Prisma query for your use case.
-    // It finds all Users who...
     const availableStudents = await prisma.user.findMany({
       where: {
-        // 1. ...have an 'accepted' invite for this specific project
         invites: {
           some: {
             projectId: projectId,
             status: "accepted",
           },
         },
-        // 2. ...and are NOT a member of any team for this specific project
         teamMemberships: {
           none: {
             team: {
@@ -35,7 +31,6 @@ export async function GET(
           },
         },
       },
-      // 3. ...and we only select the fields the frontend needs.
       select: {
         id: true,
         name: true,
