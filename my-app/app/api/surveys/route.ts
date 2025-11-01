@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 
+// If you are getting the error "Property 'survey' does not exist on type 'PrismaClient<...>'",
+// you must run 'npx prisma generate' in your terminal inside the 'my-app' directory.
+
 export async function POST(req: Request) {
   try {
     const user = await getUser();
@@ -15,18 +18,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const survey = await prisma.survey.create({
+    // Check if the instructor owns the project (good practice)
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project || project.instructorId !== user.id) {
+      return NextResponse.json({ error: "Project not found or unauthorized" }, { status: 403 });
+    }
+
+
+    const survey = await prisma.survey.create({ // Correctly uses prisma.survey
       data: {
         projectId,
-        questions: {
+        instructorId: user.id,
+        title: "Peer Evaluation Survey", // Default title as it's not captured in UI yet
+        criteria: {
           create: questions.map((q: any) => ({
             text: q.text,
-            type: q.type,
-            options: q.options || [],
           })),
         },
       },
-      include: { questions: true },
+      include: { criteria: true },
     });
 
     return NextResponse.json(survey, { status: 201 });
@@ -45,14 +55,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
     }
 
-    const surveys = await prisma.survey.findMany({
+    const surveys = await prisma.survey.findMany({ // Correctly uses prisma.survey
       where: { projectId },
-      include: { questions: true },
+      include: { criteria: true },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(surveys);
+    // Always return a structure the frontend expects on success
+    return NextResponse.json({ surveys });
   } catch (err) {
     console.error("Error fetching surveys:", err);
-    return NextResponse.json({ error: "Failed to fetch surveys" }, { status: 500 });
+    // Always return a consistent error structure with an empty array
+    return NextResponse.json({ error: "Failed to fetch surveys", surveys: [] }, { status: 500 });
   }
 }

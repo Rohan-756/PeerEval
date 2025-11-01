@@ -1,6 +1,7 @@
 import Header from "@/app/components/Header";
 import { prisma } from "@/lib/prisma";
 import TeamManager from "@/app/components/TeamManager";
+import SurveyButton from "@/app/components/SurveyButton"; // Import the new button component
 
 interface ProjectPageProps {
   params: Promise<{ id: string }> | { id: string };
@@ -53,6 +54,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     <>
       <Header />
       <div className="p-8 max-w-4xl mx-auto space-y-6">
+        
+        {/* --- New Survey Button Integration --- */}
+        <SurveyButton projectId={project.id} />
+        {/* ------------------------------------- */}
+        
         {/* ✅ Form Team Section */}
         <TeamManager
           projectId={project.id}
