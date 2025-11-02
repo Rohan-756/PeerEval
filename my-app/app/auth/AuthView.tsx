@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react";
-import Header from "./Header";
+import Header from "../components/Header";
 import { useRouter} from "next/navigation"
 
 export default function AuthView({handlePasswordReset, setView, setIsLoading, setUser, onAuthSuccess }: any) {

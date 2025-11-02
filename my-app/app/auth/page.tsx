@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AuthView from "../components/AuthView";
+import AuthView from "./AuthView";
 
 export default function AuthPage() {
   const router = useRouter();
