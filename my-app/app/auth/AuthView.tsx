@@ -13,14 +13,14 @@ export default function AuthView({handlePasswordReset, setView, setIsLoading, se
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"student" | "instructor">("student");
   const [error, setError] = useState("");
-
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!email || !password) return setError("Please fill email and password");
     handleAuthAction(isRegistering ? "register" : "login", email, password, isRegistering ? role : undefined);
   };
-
+  // Handle password reset click
   const handleResetClick = () => {
     const inputEmail = prompt("Enter your email to request a password reset:");
     if (inputEmail) handlePasswordReset(inputEmail);
@@ -57,7 +57,7 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
   }
 };
 
-
+  // JSX part
   return (
     <>
     <Header user={{id:'', email:'', role:'student'}} onLogout={()=>{}}/>
