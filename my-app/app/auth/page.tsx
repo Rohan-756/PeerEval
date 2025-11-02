@@ -22,7 +22,7 @@ export default function AuthPage() {
       }
     }
   }, [router]);
-
+  // Handle password reset
   const handlePasswordReset = async (email: string) => {
     setIsLoading(true);
     try {
