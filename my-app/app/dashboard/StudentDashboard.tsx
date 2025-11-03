@@ -123,7 +123,10 @@ export default function StudentDashboard({ user }: { user: any }) {
                     <ul className="mt-1 space-y-1">
                       {surveysByProject[p.projectId].map((a) => (
                         <li key={a.id} className="text-sm flex items-center justify-between">
-                          <span>{a.survey?.title}</span>
+                          <div className="flex items-center gap-3">
+                            <span>{a.survey?.title}</span>
+                            <a href={`/projects/${p.projectId}`} className="text-indigo-600 hover:underline">Respond</a>
+                          </div>
                           <span className="text-xs text-gray-600">Due {new Date(a.deadline).toLocaleString()}</span>
                         </li>
                       ))}
