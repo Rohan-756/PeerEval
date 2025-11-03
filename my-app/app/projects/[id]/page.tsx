@@ -1,6 +1,7 @@
 import Header from "@/app/components/Header";
 import { prisma } from "@/lib/prisma";
 import TeamManager from "@/app/components/TeamManager";
+import SurveyManager from "@/app/components/SurveyManager";
 
 interface ProjectPageProps {
   // The params prop can be a promise, so we must account for that
@@ -58,7 +59,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     prisma.project.findUnique({
       where: { id: projectId }, // And projectId is correctly passed here
       include: {
-        instructor: { select: { email: true, name: true } },
+        instructor: { select: { id: true, email: true, name: true } },
         invites: {
           include: {
             student: { select: { id: true, email: true, name: true } },
@@ -100,6 +101,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Instructor</h2>
           <p>{project.instructor.name || project.instructor.email}</p>
         </div>
+
+        {/* Surveys Section */}
+        <SurveyManager projectId={project.id} instructorId={project.instructor.id} />
 
         {/* Invited Students Section (Unchanged) */}
         <div className="bg-white p-4 rounded-lg shadow border border-indigo-100">
