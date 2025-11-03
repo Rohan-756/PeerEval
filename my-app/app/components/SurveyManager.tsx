@@ -14,7 +14,9 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
   const isInstructorOwner = currentUser?.role === "instructor" && currentUser?.id === instructorId;
   const isStudent = currentUser?.role === "student";
   const [myTeam, setMyTeam] = useState<any[]>([]);
-  const [textAnswers, setTextAnswers] = useState<Record<string, Record<string, string>>>({});
+  // responses[memberId][criterionId] = { text: string, rating: number }
+  const [responses, setResponses] = useState<Record<string, Record<string, { text: string; rating: number }>>>({});
+  const [submittedMap, setSubmittedMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const saved = sessionStorage.getItem("peerEvalUser");
@@ -39,6 +41,28 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
 
   useEffect(() => { loadAssignments(); }, [projectId]);
 
+  // After assignments load, check if current student already submitted each
+  useEffect(() => {
+    const checkSubmitted = async () => {
+      if (!isStudent || !currentUser?.id || !assignments.length) return;
+      try {
+        const pairs = await Promise.all(
+          assignments.map(async (a) => {
+            const res = await fetch(`/api/surveys/${a.id}/my-status?respondentId=${currentUser.id}`);
+            const data = await res.json();
+            return [a.id, !!data.submitted] as const;
+          })
+        );
+        const map: Record<string, boolean> = {};
+        for (const [id, flag] of pairs) map[id] = flag;
+        setSubmittedMap(map);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    checkSubmitted();
+  }, [assignments, isStudent, currentUser?.id]);
+
   // Load current student's team members for text responses
   useEffect(() => {
     const loadTeam = async () => {
@@ -46,11 +70,13 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
       try {
         const res = await fetch(`/api/projects/${projectId}/my-team?studentId=${currentUser.id}`);
         const data = await res.json();
-        if (res.ok) setMyTeam(data.members || []);
+        if (res.ok) setMyTeam((data.members || []).filter((m: any) => m.id !== currentUser.id));
       } catch {}
     };
     loadTeam();
   }, [isStudent, currentUser?.id, projectId]);
+
+  // no instructor response viewing
 
   const handleAssign = async () => {
     if (!form.title.trim() || !form.deadline) {
@@ -168,7 +194,9 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
         <p className="text-gray-500">No surveys assigned yet.</p>
       ) : (
         <ul className="space-y-2">
-          {assignments.map((a) => (
+          {assignments
+            .filter((a) => !(isStudent && submittedMap[a.id]))
+            .map((a) => (
             <li key={a.id} className="p-3 border rounded-md">
               <div className="flex items-center justify-between">
                 <div>
@@ -200,15 +228,33 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                             <textarea
                               className="w-full border border-gray-300 rounded p-2"
                               rows={2}
-                              value={textAnswers[member.id]?.[c.id] || ''}
+                              value={responses[member.id]?.[c.id]?.text || ''}
                               onChange={(e) => {
                                 const v = e.target.value;
-                                setTextAnswers((prev) => ({
+                                setResponses((prev) => ({
                                   ...prev,
-                                  [member.id]: { ...(prev[member.id] || {}), [c.id]: v },
+                                  [member.id]: { ...(prev[member.id] || {}), [c.id]: { ...(prev[member.id]?.[c.id] || { rating: 3, text: '' }), text: v } },
                                 }));
                               }}
                             />
+                            <div className="mt-1">
+                              <label className="text-xs text-gray-600 mr-2">Rating</label>
+                              <select
+                                className="border border-gray-300 rounded p-1 text-sm"
+                                value={responses[member.id]?.[c.id]?.rating ?? 3}
+                                onChange={(e) => {
+                                  const v = parseInt(e.target.value || '3', 10);
+                                  setResponses((prev) => ({
+                                    ...prev,
+                                    [member.id]: { ...(prev[member.id] || {}), [c.id]: { ...(prev[member.id]?.[c.id] || { text: '' }), rating: v } },
+                                  }));
+                                }}
+                              >
+                                {[1,2,3,4,5].map((n) => (
+                                  <option key={n} value={n}>{n}</option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -226,12 +272,13 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                               assignmentId: a.id,
                               respondentId: currentUser.id,
                               projectId,
-                              answers: textAnswers,
+                              answers: responses,
                             }),
                           });
                           const data = await res.json();
                           if (!res.ok) throw new Error(data.error || 'Failed to submit');
                           alert('✅ Responses submitted');
+                          setSubmittedMap((prev) => ({ ...prev, [a.id]: true }));
                         } catch (e: any) {
                           alert(e.message || 'Error submitting');
                         }
@@ -243,6 +290,7 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                   </div>
                 </div>
               )}
+              {/* instructor view of responses removed */}
             </li>
           ))}
         </ul>
