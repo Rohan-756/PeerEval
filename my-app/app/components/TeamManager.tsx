@@ -22,7 +22,7 @@ interface TeamManagerProps {
   availableStudents: Student[];
   existingTeams: Team[];
 }
-
+// TeamManager component
 export default function TeamManager({
   projectId,
   availableStudents, // Using the new prop
@@ -32,7 +32,7 @@ export default function TeamManager({
   // This state holds the teams passed as props, plus any new ones created
   const [teams, setTeams] = useState(existingTeams);
   const [loading, setLoading] = useState(false);
-
+  // Toggle student selection in draft team
   const toggleSelect = (studentId: string) => {
     setDraft((prev) =>
       prev.includes(studentId)
@@ -42,7 +42,7 @@ export default function TeamManager({
         : prev
     );
   };
-
+  // Confirm and create the team
   const handleConfirmTeam = async () => {
     if (draft.length === 0) {
       alert("Select at least one student.");
