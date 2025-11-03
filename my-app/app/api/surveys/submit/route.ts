@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 // Body: { assignmentId, respondentId, projectId, answers: { [targetStudentId]: { [criterionId]: string } } }
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { assignmentId, respondentId, projectId, answers } = body || {};
+    const { assignmentId, respondentId, projectId, answers } = body || {} as {
+      assignmentId: string;
+      respondentId: string;
+      projectId: string;
+      // answers[targetStudentId][criterionId] = { text: string; rating: number }
+      answers: Record<string, Record<string, { text: string; rating: number }>>;
+    };
 
     if (!assignmentId || !respondentId || !projectId || !answers || typeof answers !== 'object') {
       return NextResponse.json({ error: "assignmentId, respondentId, projectId, answers required" }, { status: 400 });
@@ -41,8 +48,8 @@ export async function POST(req: Request) {
     const writes = Object.entries(answers).map(([targetStudentId, answerMap]) =>
       prisma.surveyResponse.upsert({
         where: { assignmentId_respondentId_targetStudentId: { assignmentId, respondentId, targetStudentId } },
-        update: { answers: answerMap },
-        create: { assignmentId, respondentId, targetStudentId, answers: answerMap as any },
+        update: { answers: answerMap as Prisma.InputJsonValue },
+        create: { assignmentId, respondentId, targetStudentId, answers: answerMap as Prisma.InputJsonValue },
       })
     );
     await Promise.all(writes);
