@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ user: propUser, onLogout }) => {
 
   // ✅ Only show "Dashboard" button when NOT on '/' or '/dashboard'
   const showDashboardButton = user?.id && !['/', '/dashboard'].includes(pathname);
-
+  // JSX part
   return (
     <header className="flex justify-between items-center p-4 bg-white border-b shadow-md sticky top-0 z-10">
       {/* --- App Logo --- */}
