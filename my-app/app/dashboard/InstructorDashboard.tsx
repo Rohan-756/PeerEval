@@ -14,6 +14,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // No survey UI here; handled on project page
+
   // ✅ Fetch projects created by this instructor
   useEffect(() => {
     const fetchProjects = async () => {
@@ -39,6 +41,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
 
     if (user?.id) fetchProjects();
   }, [user.id]);
+
+  // (surveys are managed on the project page)
 
   // ✅ Create a new project
   const handleAddProject = async () => {
@@ -246,6 +250,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
           </button>
         </div>
       </section>
+
+      {/* (Survey assignment moved to the project page) */}
     </div>
   );
 }
