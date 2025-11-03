@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 export default function StudentDashboard({ user }: { user: any }) {
   const [invites, setInvites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [surveysByProject, setSurveysByProject] = useState<Record<string, any[]>>({});
 
   // ✅ Fetch invites for this student
   useEffect(() => {
@@ -35,6 +36,26 @@ export default function StudentDashboard({ user }: { user: any }) {
 
     fetchInvites();
   }, [user.id]);
+
+  // 🆕 Load surveys for accepted projects
+  useEffect(() => {
+    const load = async () => {
+      const accepted = invites.filter((i) => i.status === "accepted");
+      await Promise.all(
+        accepted.map(async (p) => {
+          try {
+            const res = await fetch(`/api/projects/${p.projectId}/surveys`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to load surveys");
+            setSurveysByProject((prev) => ({ ...prev, [p.projectId]: data.assignments || [] }));
+          } catch (e) {
+            console.error(e);
+          }
+        })
+      );
+    };
+    if (invites.length) load();
+  }, [invites]);
 
   // ✅ Accept or reject invite
   const handleRespond = async (inviteId: string, status: "accepted" | "rejected") => {
@@ -94,6 +115,24 @@ export default function StudentDashboard({ user }: { user: any }) {
                 <p className="text-xs text-gray-500 mt-1">
                   Instructor: {p.instructorName}
                 </p>
+                <div className="mt-3">
+                  <div className="font-medium">Assigned Surveys</div>
+                  {!(surveysByProject[p.projectId]?.length) ? (
+                    <p className="text-sm text-gray-600">No surveys yet.</p>
+                  ) : (
+                    <ul className="mt-1 space-y-1">
+                      {surveysByProject[p.projectId].map((a) => (
+                        <li key={a.id} className="text-sm flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span>{a.survey?.title}</span>
+                            <a href={`/projects/${p.projectId}`} className="text-indigo-600 hover:underline">Respond</a>
+                          </div>
+                          <span className="text-xs text-gray-600">Due {new Date(a.deadline).toLocaleString()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

@@ -24,6 +24,15 @@ model User {
 
   // 👇 add back relation to TeamMember
   teamMemberships TeamMember[]
+
+  // Surveys created by this instructor
+  createdSurveys Survey[] @relation("SurveyCreator")
+
+  // Survey responses submitted by this user
+  submittedResponses SurveyResponse[] @relation("Respondent")
+
+  // Survey responses received about this user (as the target)
+  receivedResponses  SurveyResponse[] @relation("TargetStudent")
 }
 
 model Project {
@@ -38,6 +47,9 @@ model Project {
 
   // 👇 add back relation to Team
   teams        Team[]
+
+  // Surveys assigned to this project
+  surveyAssignments SurveyAssignment[]
 
   createdAt    DateTime  @default(now())
 }
@@ -70,4 +82,70 @@ model TeamMember {
   teamId    String
   student   User     @relation(fields: [studentId], references: [id])
   studentId String
+}
+
+model Survey {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+
+  // creator (instructor)
+  creator   User   @relation("SurveyCreator", fields: [creatorId], references: [id])
+  creatorId String
+
+  assignments SurveyAssignment[]
+  criteria    SurveyCriterion[]
+
+  createdAt  DateTime @default(now())
+}
+
+model SurveyAssignment {
+  id        String   @id @default(cuid())
+
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String
+
+  survey    Survey   @relation(fields: [surveyId], references: [id])
+  surveyId  String
+
+  deadline  DateTime
+  status    String   @default("open") // open | closed
+
+  createdAt DateTime @default(now())
+
+  // Responses linked to this assignment
+  responses SurveyResponse[]
+}
+
+model SurveyCriterion {
+  id        String  @id @default(cuid())
+
+  survey    Survey  @relation(fields: [surveyId], references: [id])
+  surveyId  String
+
+  label     String
+  minRating Int     @default(1)
+  maxRating Int     @default(5)
+  order     Int
+}
+
+model SurveyResponse {
+  id               String   @id @default(cuid())
+
+  assignment       SurveyAssignment @relation(fields: [assignmentId], references: [id])
+  assignmentId     String
+
+  respondent       User    @relation("Respondent", fields: [respondentId], references: [id])
+  respondentId     String
+
+  // the student being evaluated (peer or self)
+  targetStudent    User    @relation("TargetStudent", fields: [targetStudentId], references: [id])
+  targetStudentId  String
+
+  // JSON map of criterionId -> text answer
+  answers          Json
+
+  submittedAt      DateTime @default(now())
+
+  @@unique([assignmentId, respondentId, targetStudentId])
 }
