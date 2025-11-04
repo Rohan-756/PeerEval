@@ -12,36 +12,41 @@ export default function InstructorDashboard({ user }: { user: any }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // ADDED: State to trigger refetch
 
-  // No survey UI here; handled on project page
+  // ✅ Extracted fetch projects logic
+  const fetchProjects = async () => {
+    try {
+      setIsFetching(true);
+      setError(null);
 
-  // ✅ Fetch projects created by this instructor
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setIsFetching(true);
-        setError(null);
+      const res = await fetch(`/api/projects/list?userId=${user.id}`);
+      const data = await res.json();
 
-        const res = await fetch(`/api/projects/list?userId=${user.id}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to fetch projects");
-        }
-
-        setProjects(data.projects || []);
-      } catch (err: any) {
-        console.error("❌ Error loading projects:", err);
-        setError(err.message || "Failed to load projects");
-      } finally {
-        setIsFetching(false);
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch projects");
       }
-    };
 
+      setProjects(data.projects || []);
+    } catch (err: any) {
+      console.error("❌ Error loading projects:", err);
+      setError(err.message || "Failed to load projects");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+
+  // ✅ useEffect now depends on refreshKey
+  useEffect(() => {
     if (user?.id) fetchProjects();
-  }, [user.id]);
+  }, [user.id, refreshKey]); // ADDED: refreshKey as dependency
 
-  // (surveys are managed on the project page)
+
+  // Function to manually trigger a data refetch after deletion
+  const handleProjectDeleteSuccess = () => {
+      setRefreshKey(prev => prev + 1); // Increments key to trigger useEffect
+  }
 
   // ✅ Create a new project
   const handleAddProject = async () => {
@@ -76,8 +81,6 @@ export default function InstructorDashboard({ user }: { user: any }) {
     }
   };
 
-  // 🗑️ Project deletion logic is now handled inside ProjectList.tsx
-  // const handleDeleteProject = async (projectId: string) => { ... } // REMOVED UNUSED FUNCTION
 
   return (
     <div className="p-6 space-y-8">
@@ -138,12 +141,11 @@ export default function InstructorDashboard({ user }: { user: any }) {
             projects={[...projects]
               .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())}
             limit={5}
-            showDelete={true} // <--- ADDED: show delete button on dashboard
+            showDelete={true}
+            onDeleteSuccess={handleProjectDeleteSuccess} // ADDED: Pass the callback
           />
         )}
       </section>
-
-      {/* (Survey assignment moved to the project page) */}
     </div>
   );
 }

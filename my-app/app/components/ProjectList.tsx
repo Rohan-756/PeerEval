@@ -14,15 +14,17 @@ export default function ProjectList({
   limit,
   showCreateTeam,
   showInvite,
-  showDelete, // <--- ADDED: new prop for delete button visibility
+  showDelete,
   emptyMessage = "No projects yet.",
+  onDeleteSuccess, // MODIFIED: Added new prop
 }: {
   projects: Project[];
   limit?: number;
   showCreateTeam?: boolean;
   showInvite?: boolean;
-  showDelete?: boolean; // <--- ADDED: new prop type
+  showDelete?: boolean;
   emptyMessage?: string;
+  onDeleteSuccess?: () => void; // MODIFIED: Added new prop type
 }) {
   const router = useRouter();
   const items = (limit ? projects.slice(0, limit) : projects) || [];
@@ -85,7 +87,14 @@ export default function ProjectList({
       if (!res.ok) throw new Error(data.error || "Failed to delete project");
 
       alert(`Project "${title}" deleted successfully.`);
-      router.refresh(); // Reload the current route to update the project list
+      
+      // MODIFIED: Conditional refresh logic
+      if (onDeleteSuccess) {
+          onDeleteSuccess(); // Use custom refresh for Client Components (like Dashboard)
+      } else {
+          router.refresh(); // Use Next.js refresh for Server Components (like /projects route)
+      }
+      // END MODIFIED
 
     } catch (e: any) {
       console.error(e);
