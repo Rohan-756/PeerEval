@@ -38,7 +38,9 @@ export default async function ProjectsListPage() {
         {projects.length === 0 ? (
           <p className="text-gray-500">No projects have been created yet.</p>
         ) : (
-          <ProjectList projects={projects} showCreateTeam showInvite />
+          <ProjectList projects={projects} showCreateTeam showInvite showDelete={true} />
+          //                                                              ^^^^^^^^^^^^
+          //                                                               ADDED: showDelete prop
         )}
       </div>
     </>

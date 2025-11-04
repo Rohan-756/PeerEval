@@ -14,12 +14,14 @@ export default function ProjectList({
   limit,
   showCreateTeam,
   showInvite,
+  showDelete, // <--- ADDED: new prop for delete button visibility
   emptyMessage = "No projects yet.",
 }: {
   projects: Project[];
   limit?: number;
   showCreateTeam?: boolean;
   showInvite?: boolean;
+  showDelete?: boolean; // <--- ADDED: new prop type
   emptyMessage?: string;
 }) {
   const router = useRouter();
@@ -52,6 +54,45 @@ export default function ProjectList({
       alert(e.message || "Failed to send invite");
     }
   };
+
+  // <--- ADDED: handleDelete function
+  const handleDelete = async (projectId: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete the project: "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const saved = sessionStorage.getItem("peerEvalUser");
+      if (!saved) {
+        alert("You must be logged in to delete a project.");
+        return;
+      }
+      const user = JSON.parse(saved);
+
+      // Perform a basic client-side role check (API handles server-side check)
+      if (user.role !== 'instructor') {
+          alert("Only instructors can delete projects.");
+          return;
+      }
+
+      const res = await fetch("/api/projects/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, instructorId: user.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete project");
+
+      alert(`Project "${title}" deleted successfully.`);
+      router.refresh(); // Reload the current route to update the project list
+
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message || "Failed to delete project");
+    }
+  };
+  // END ADDED: handleDelete function
 
   return (
     <ul className="space-y-3">
@@ -90,11 +131,22 @@ export default function ProjectList({
                 Create Team
               </button>
             ) : null}
+            {/* <--- ADDED: Delete Project Button */}
+            {showDelete ? (
+              <button
+                className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(p.id, p.title);
+                }}
+              >
+                Delete
+              </button>
+            ) : null}
+            {/* END ADDED: Delete Project Button */}
           </div>
         </li>
       ))}
     </ul>
   );
 }
-
-

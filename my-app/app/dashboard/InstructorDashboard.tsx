@@ -76,32 +76,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
     }
   };
 
-  // 🆕 Delete a project
-  const handleDeleteProject = async (projectId: string) => {
-    const confirmDelete = confirm("Are you sure you want to delete this project?");
-    if (!confirmDelete) return;
-
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/projects/delete`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, instructorId: user.id }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete project");
-
-      // Remove deleted project from local state
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      alert("🗑️ Project deleted successfully!");
-    } catch (err: any) {
-      console.error(err);
-      alert("❌ Error deleting project");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 🗑️ Project deletion logic is now handled inside ProjectList.tsx
+  // const handleDeleteProject = async (projectId: string) => { ... } // REMOVED UNUSED FUNCTION
 
   return (
     <div className="p-6 space-y-8">
@@ -162,6 +138,7 @@ export default function InstructorDashboard({ user }: { user: any }) {
             projects={[...projects]
               .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())}
             limit={5}
+            showDelete={true} // <--- ADDED: show delete button on dashboard
           />
         )}
       </section>
