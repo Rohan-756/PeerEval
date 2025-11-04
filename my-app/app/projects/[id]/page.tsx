@@ -2,13 +2,14 @@ import Header from "@/app/components/Header";
 import { prisma } from "@/lib/prisma";
 import TeamManager from "@/app/components/TeamManager";
 import SurveyManager from "@/app/components/SurveyManager";
+import InviteButton from "@/app/components/InviteButton"; // REQUIRED COMPONENT
+import { notFound } from "next/navigation";
+// Removed Next.js dynamic header/redirect imports to prevent TypeError
 
 interface ProjectPageProps {
-  // The params prop can be a promise, so we must account for that
   params: Promise<{ id: string }> | { id: string };
 }
 
-// Define types for clarity
 interface Student {
   id: string;
   name: string | null;
@@ -21,12 +22,7 @@ interface Invite {
   student: Student;
 }
 
-/**
- * Server-side function to fetch ONLY students who have
- * accepted an invite and are NOT yet on a team.
- */
 async function getAvailableStudents(projectId: string) {
-  // This function is fine, no changes needed
   const availableStudents = await prisma.user.findMany({
     where: {
       invites: {
@@ -49,15 +45,20 @@ async function getAvailableStudents(projectId: string) {
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  // 👇 THE FIX IS HERE
-  // We await the params promise to get the plain object
+  
   const resolvedParams = await params;
-  const projectId = resolvedParams.id; // Now this will work
+  const projectId = resolvedParams.id;
 
-  // 1. Fetch all project data in parallel for efficiency
+  // --- Client-side authorization pattern ---
+  // Default values are used here. Authorization logic is handled in client components
+  // (InviteButton, TeamManager, SurveyManager) via sessionStorage.
+  const currentUserRole = "student"; 
+  const currentUserId = ""; 
+  // ------------------------------------------
+
   const [project, availableStudents] = await Promise.all([
     prisma.project.findUnique({
-      where: { id: projectId }, // And projectId is correctly passed here
+      where: { id: projectId }, 
       include: {
         instructor: { select: { id: true, email: true, name: true } },
         invites: {
@@ -74,38 +75,59 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         },
       },
     }),
-    getAvailableStudents(projectId), // And here
+    getAvailableStudents(projectId),
   ]);
 
   if (!project) {
-    return (
-      <div className="p-8 text-center text-red-600 font-semibold">
-        ⚠️ Project not found.
-      </div>
-    );
+    notFound();
   }
+  
+  const instructorId = project.instructorId; 
 
   return (
     <>
       <Header />
-      <div className="p-8 max-w-4xl mx-auto space-y-6">
-        {/* TeamManager Section */}
-        <TeamManager
-          projectId={project.id}
-          availableStudents={availableStudents}
-          existingTeams={project.teams}
-        />
-
-        {/* Project Info (Unchanged) */}
-        <div className="bg-white p-4 rounded-lg shadow border border-indigo-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Instructor</h2>
-          <p>{project.instructor.name || project.instructor.email}</p>
+      <div className="p-8 max-w-6xl mx-auto space-y-10">
+        
+        {/* ── Project Header (Includes Invite Student Button) ──────────────── */}
+        <div className="flex items-start justify-between border-b pb-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800">{project.title}</h1>
+            <p className="text-lg text-gray-600 mt-1">{project.description}</p>
+            <p className="text-sm text-gray-400 mt-2">Instructor: {project.instructor.name || project.instructor.email}</p>
+          </div>
+          
+          <div className="flex space-x-3 mt-1">
+              {/* This button will only be visible and functional if the user is the project's instructor (checked in InviteButton.tsx) */}
+              <InviteButton 
+                  projectId={projectId} 
+                  instructorId={instructorId} 
+              />
+          </div>
         </div>
 
-        {/* Surveys Section */}
-        <SurveyManager projectId={project.id} instructorId={project.instructor.id} />
 
-        {/* Invited Students Section (Unchanged) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <div className="lg:col-span-1">
+            <SurveyManager 
+                projectId={projectId} 
+                userRole={currentUserRole} 
+                instructorId={instructorId} 
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <TeamManager 
+                projectId={projectId} 
+                availableStudents={availableStudents}
+                existingTeams={project.teams}
+                userRole={currentUserRole} 
+                currentUserId={currentUserId}
+            />
+          </div>
+        </div>
+        
         <div className="bg-white p-4 rounded-lg shadow border border-indigo-100">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             All Invited Students
@@ -136,6 +158,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             </ul>
           )}
         </div>
+
       </div>
     </>
   );
