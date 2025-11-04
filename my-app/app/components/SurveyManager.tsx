@@ -1,3 +1,5 @@
+// my-app/app/components/SurveyManager.tsx
+
 "use client";
 import React, { useEffect, useState } from "react";
 
@@ -13,9 +15,8 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
 
   const isInstructorOwner = currentUser?.role === "instructor" && currentUser?.id === instructorId;
   const isStudent = currentUser?.role === "student";
-  const [myTeam, setMyTeam] = useState<any[]>([]);
-  // responses[memberId][criterionId] = { text: string, rating: number }
-  const [responses, setResponses] = useState<Record<string, Record<string, { text: string; rating: number }>>>({});
+  // REMOVED: const [myTeam, setMyTeam] = useState<any[]>([]);
+  // REMOVED: const [responses, setResponses] = useState<Record<string, Record<string, { text: string; rating: number }>>>({});
   const [submittedMap, setSubmittedMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -63,18 +64,7 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
     checkSubmitted();
   }, [assignments, isStudent, currentUser?.id]);
 
-  // Load current student's team members for text responses
-  useEffect(() => {
-    const loadTeam = async () => {
-      if (!isStudent || !currentUser?.id) return;
-      try {
-        const res = await fetch(`/api/projects/${projectId}/my-team?studentId=${currentUser.id}`);
-        const data = await res.json();
-        if (res.ok) setMyTeam((data.members || []).filter((m: any) => m.id !== currentUser.id));
-      } catch {}
-    };
-    loadTeam();
-  }, [isStudent, currentUser?.id, projectId]);
+  // REMOVED: Load current student's team members useEffect
 
   // no instructor response viewing
 
@@ -212,82 +202,15 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                   ))}
                 </ul>
               )}
-              {isStudent && a.status === 'open' && !!a.survey?.criteria?.length && (
+              {/* REMOVED: Student response UI block */}
+              {isStudent && a.status === 'open' && !submittedMap[a.id] && (
                 <div className="mt-3">
-                  <div className="font-medium mb-1">Your responses</div>
-                  {myTeam.length === 0 && (
-                    <p className="text-sm text-gray-600 mb-2">You are not assigned to a team yet for this project. Ask your instructor to add you to a team to respond.</p>
-                  )}
-                  <div className="space-y-3">
-                    {myTeam.map((member) => (
-                      <div key={member.id} className="border rounded p-2">
-                        <div className="text-sm font-semibold mb-1">For: {member.name || member.email}</div>
-                        {a.survey.criteria.map((c: any) => (
-                          <div key={c.id} className="mb-2">
-                            <div className="text-sm text-gray-700 mb-1">{c.label}</div>
-                            <textarea
-                              className="w-full border border-gray-300 rounded p-2"
-                              rows={2}
-                              value={responses[member.id]?.[c.id]?.text || ''}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                setResponses((prev) => ({
-                                  ...prev,
-                                  [member.id]: { ...(prev[member.id] || {}), [c.id]: { ...(prev[member.id]?.[c.id] || { rating: 3, text: '' }), text: v } },
-                                }));
-                              }}
-                            />
-                            <div className="mt-1">
-                              <label className="text-xs text-gray-600 mr-2">Rating</label>
-                              <select
-                                className="border border-gray-300 rounded p-1 text-sm"
-                                value={responses[member.id]?.[c.id]?.rating ?? 3}
-                                onChange={(e) => {
-                                  const v = parseInt(e.target.value || '3', 10);
-                                  setResponses((prev) => ({
-                                    ...prev,
-                                    [member.id]: { ...(prev[member.id] || {}), [c.id]: { ...(prev[member.id]?.[c.id] || { text: '' }), rating: v } },
-                                  }));
-                                }}
-                              >
-                                {[1,2,3,4,5].map((n) => (
-                                  <option key={n} value={n}>{n}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2">
-                    <button
-                      className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-                      onClick={async () => {
-                        try {
-                          const res = await fetch('/api/surveys/submit', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              assignmentId: a.id,
-                              respondentId: currentUser.id,
-                              projectId,
-                              answers: responses,
-                            }),
-                          });
-                          const data = await res.json();
-                          if (!res.ok) throw new Error(data.error || 'Failed to submit');
-                          alert('✅ Responses submitted');
-                          setSubmittedMap((prev) => ({ ...prev, [a.id]: true }));
-                        } catch (e: any) {
-                          alert(e.message || 'Error submitting');
-                        }
-                      }}
-                      disabled={myTeam.length === 0}
-                    >
-                      Submit Responses
-                    </button>
-                  </div>
+                  <a 
+                    href={`/projects/${projectId}/surveys/${a.id}`} 
+                    className="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 text-sm font-medium"
+                  >
+                    Go to Survey Page
+                  </a>
                 </div>
               )}
               {/* instructor view of responses removed */}
@@ -298,5 +221,3 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
     </div>
   );
 }
-
-
