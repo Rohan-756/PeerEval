@@ -26,9 +26,23 @@ export async function GET(req: Request) {
       projects = await prisma.project.findMany({
         where: { instructorId: userId },
         include: {
+          instructor: {
+            select: { id: true, email: true, name: true },
+          },
           invites: {
             include: {
               student: { select: { id: true, email: true, name: true } },
+            },
+          },
+          teams: {
+            include: {
+              members: {
+                include: {
+                  student: {
+                    select: { id: true, email: true, name: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -40,6 +54,17 @@ export async function GET(req: Request) {
           project: {
             include: {
               instructor: { select: { id: true, email: true, name: true } },
+              teams: {
+                include: {
+                  members: {
+                    include: {
+                      student: {
+                        select: { id: true, email: true, name: true },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
         },

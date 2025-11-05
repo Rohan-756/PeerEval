@@ -5,11 +5,11 @@ import StudentSurveyResponse from "@/app/components/StudentSurveyResponse";
 import { notFound } from "next/navigation";
 
 interface SurveyResponsePageProps {
-  params: { projectId: string; assignmentId: string };
+  params: Promise<{ id: string; assignmentId: string }>;
 }
 
 export default async function SurveyResponsePage({ params }: SurveyResponsePageProps) {
-  const { projectId, assignmentId } = params;
+  const { id: projectId, assignmentId } = await params;
 
   // 1. Fetch the Assignment and its Survey/Criteria
   // FIX: Changed findUnique to findFirst. findUnique only accepts fields

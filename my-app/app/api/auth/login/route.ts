@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     if (!passwordValid) return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
 
     // return the full minimal user object needed by client
-    const safeUser = { id: user.id, email: user.email, role: user.role };
+    const safeUser = { id: user.id, email: user.email, name: user.name, role: user.role };
     return NextResponse.json({ message: 'Login successful', user: safeUser });
   } catch (err) {
     console.error(err);

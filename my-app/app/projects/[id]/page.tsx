@@ -141,7 +141,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                   key={invite.student.id}
                   className="flex justify-between items-center border-b pb-2 text-gray-700"
                 >
-                  <span>{invite.student.email}</span>
+                  <span>{invite.student.name || invite.student.email}</span>
                   <span
                     className={`text-sm font-medium px-2 py-1 rounded ${
                       invite.status === "accepted"

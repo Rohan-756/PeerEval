@@ -6,12 +6,12 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, role } = await req.json();
+    const { email, password, role, name } = await req.json();
 
     // Validate required fields
-    if (!email || !password || !role) {
+    if (!email || !password || !role || !name) {
       return NextResponse.json(
-        { error: 'Email, password, and role are required' },
+        { error: 'Email, name, password, and role are required' },
         { status: 400 }
       );
     }
@@ -38,13 +38,14 @@ export async function POST(req: NextRequest) {
     // Hash password and create user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-      data: { email, password: hashedPassword, role },
+      data: { email, password: hashedPassword, role, name },
     });
 
     return NextResponse.json({
       message: 'User registered',
       userId: newUser.id,
       role: newUser.role,
+      name: newUser.name,
     });
 
   } catch (err) {

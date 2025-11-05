@@ -95,7 +95,7 @@ export default function StudentDashboard({ user }: { user: any }) {
   return (
     <div className="p-6 space-y-8">
       <h2 className="text-3xl font-semibold text-indigo-700">
-        Welcome, {user.email} (Student)
+        Welcome, {user.name || user.email} (Student)
       </h2>
 
       {/* ─── Accepted Projects ─────────────────────────────── */}

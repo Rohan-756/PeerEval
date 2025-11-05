@@ -85,7 +85,7 @@ export default function InstructorDashboard({ user }: { user: any }) {
   return (
     <div className="p-6 space-y-8">
       <h2 className="text-3xl font-semibold text-indigo-700">
-        Welcome, {user.email} (Instructor)
+        Welcome, {user.name || user.email} (Instructor)
       </h2>
 
       {/* ─── Add New Project ─────────────────────────────── */}
