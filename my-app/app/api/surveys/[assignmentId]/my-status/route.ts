@@ -5,14 +5,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET(
   req: NextRequest,
   // Corrected context type (assuming standard Next.js App Router usage)
-  context: { params: { assignmentId: string } } 
+  context: { params: Promise<{ assignmentId: string }> } 
 ) {
   try {
     const { searchParams } = new URL(req.url);
     const respondentId = searchParams.get("respondentId");
     
-    // FIX: Get assignmentId directly from context.params (no await needed)
-    const assignmentId = context.params.assignmentId;
+    // FIX: Get assignmentId from context.params (await needed in Next.js 16+)
+    const { assignmentId } = await context.params;
 
     if (!assignmentId || !respondentId) {
       return NextResponse.json({ error: "assignmentId and respondentId are required" }, { status: 400 });

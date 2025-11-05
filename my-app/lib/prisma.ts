@@ -4,18 +4,12 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ["error", "warn"],
+if (!globalForPrisma.prisma) {
+  globalForPrisma.prisma = new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
-
-// In dev mode, close old client before recreating (for Turbopack reloads)
-if (process.env.NODE_ENV !== "production") {
-  if (globalForPrisma.prisma) {
-    await globalForPrisma.prisma.$disconnect().catch(() => {});
-  }
-  globalForPrisma.prisma = prisma;
 }
+
+export const prisma = globalForPrisma.prisma;
 
 export default prisma;

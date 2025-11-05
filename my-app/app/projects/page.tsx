@@ -6,13 +6,31 @@ import Link from "next/link";
 import ProjectList from "@/app/components/ProjectList";
 
 export default async function ProjectsListPage() {
-  // Fetch all projects.
-  // We only select the fields needed for the list to keep the query light.
+  // Fetch all projects with instructor and team information.
   const projects = await prisma.project.findMany({
-    select: {
-      id: true,
-      title: true,
-      description: true,
+    include: {
+      instructor: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      teams: {
+        include: {
+          members: {
+            include: {
+              student: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: {
       createdAt: "desc", // Show newest projects first

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
+import PeerFeedbackView from './PeerFeedbackView';
 
 // Simplified types for the component, consistent with the rest of the app's implicit structure
 interface SurveyCriterion {
@@ -28,6 +29,10 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [allSubmitted, setAllSubmitted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(false);
+  const [whoRatedMe, setWhoRatedMe] = useState<any[]>([]);
+  const [loadingWhoRatedMe, setLoadingWhoRatedMe] = useState(false);
   const router = useRouter();
 
   // responses[memberId][criterionId] = { text: string, rating: number }
@@ -44,21 +49,40 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
     }
   }, []);
 
-  // Check submission status
+  // Check submission status and completion status
   useEffect(() => {
     // Only proceed if the user is confirmed as a student and their ID is loaded
     if (!isStudent || !isUserLoaded) return; 
     
-    const checkSubmitted = async () => {
+    const checkStatus = async () => {
       try {
-        const res = await fetch(`/api/surveys/${assignment.id}/my-status?respondentId=${currentUser.id}`);
-        const data = await res.json();
-        setIsSubmitted(!!data.submitted);
+        // Check if user has submitted
+        const statusRes = await fetch(`/api/surveys/${assignment.id}/my-status?respondentId=${currentUser.id}`);
+        const statusData = await statusRes.json();
+        setIsSubmitted(!!statusData.submitted);
+
+        // If user has submitted, check if all team members have submitted
+        if (statusData.submitted) {
+          setCheckingCompletion(true);
+          try {
+            const completionRes = await fetch(
+              `/api/surveys/${assignment.id}/completion-status?studentId=${currentUser.id}`
+            );
+            const completionData = await completionRes.json();
+            if (completionRes.ok) {
+              setAllSubmitted(completionData.allSubmitted || false);
+            }
+          } catch (e) {
+            console.error("Error checking completion:", e);
+          } finally {
+            setCheckingCompletion(false);
+          }
+        }
       } catch (e) {
         console.error(e);
       }
     };
-    checkSubmitted();
+    checkStatus();
   }, [assignment.id, isStudent, isUserLoaded, currentUser?.id]);
 
   // Load current student's team members for text responses
@@ -82,6 +106,33 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
     };
     loadTeam();
   }, [isStudent, isUserLoaded, currentUser?.id, projectId]);
+
+  // Load who has rated this student
+  useEffect(() => {
+    if (!isStudent || !isUserLoaded || !assignment.id) return;
+    
+    const loadWhoRatedMe = async () => {
+      try {
+        setLoadingWhoRatedMe(true);
+        const res = await fetch(
+          `/api/surveys/${assignment.id}/who-rated-me?targetStudentId=${currentUser.id}`
+        );
+        const data = await res.json();
+        if (res.ok) {
+          setWhoRatedMe(data.respondents || []);
+        }
+      } catch (e) {
+        console.error("Error loading who rated me:", e);
+      } finally {
+        setLoadingWhoRatedMe(false);
+      }
+    };
+    
+    loadWhoRatedMe();
+    // Refresh periodically to check for new ratings
+    const interval = setInterval(loadWhoRatedMe, 5000); // Check every 5 seconds
+    return () => clearInterval(interval);
+  }, [isStudent, isUserLoaded, currentUser?.id, assignment.id]);
 
   const handleSubmit = async () => {
     
@@ -121,7 +172,25 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
         if (!res.ok) throw new Error(data.error || 'Failed to submit');
         alert('✅ Responses submitted!');
         setIsSubmitted(true);
-        router.push('/dashboard'); 
+        // Check completion status after submission
+        try {
+          const completionRes = await fetch(
+            `/api/surveys/${assignment.id}/completion-status?studentId=${currentUser.id}`
+          );
+          const completionData = await completionRes.json();
+          if (completionRes.ok) {
+            setAllSubmitted(completionData.allSubmitted || false);
+            // If all submitted, stay on page to show feedback, otherwise go to dashboard
+            if (!completionData.allSubmitted) {
+              router.push('/dashboard');
+            }
+          } else {
+            router.push('/dashboard');
+          }
+        } catch (e) {
+          console.error("Error checking completion:", e);
+          router.push('/dashboard');
+        } 
     } catch (e: any) {
         alert(e.message || 'Error submitting');
     } finally {
@@ -154,10 +223,77 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
   
   if (isSubmitted) {
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-4">{assignment.survey.title}</h1>
-            <p className="text-green-500 font-semibold">✅ Your responses for this survey have already been submitted.</p>
+      <div className="p-8 max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">{assignment.survey.title}</h1>
+          <h2 className="text-xl text-gray-600">Project: {assignment.projectTitle}</h2>
         </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-700 font-semibold">✅ Your responses for this survey have already been submitted.</p>
+        </div>
+
+        {/* Information Box for Submitted View */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold text-blue-800 mb-2">Who You Rated:</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                {myTeam.length === 0 ? (
+                  <li className="text-gray-500">No team members</li>
+                ) : (
+                  myTeam.map((member) => (
+                    <li key={member.studentId}>
+                      ✓ {(member.student?.name && member.student.name.trim()) || member.student?.email}
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-indigo-800 mb-2">Who Has Rated You:</h3>
+              {loadingWhoRatedMe ? (
+                <p className="text-sm text-gray-500">Loading...</p>
+              ) : whoRatedMe.length === 0 ? (
+                <p className="text-sm text-gray-500">No one has rated you yet</p>
+              ) : (
+                <ul className="text-sm text-indigo-700 space-y-1">
+                  {whoRatedMe.map((respondent) => (
+                    <li key={respondent.id}>
+                      ✓ {(respondent.name && respondent.name.trim()) || respondent.email}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {checkingCompletion ? (
+          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <p className="text-gray-500">Checking if all team members have submitted...</p>
+          </div>
+        ) : allSubmitted ? (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-700 font-semibold">
+                🎉 All team members have submitted! You can now view the feedback you received.
+              </p>
+            </div>
+            <PeerFeedbackView
+              assignmentId={assignment.id}
+              targetStudentId={currentUser.id}
+              criteria={assignment.survey.criteria}
+            />
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-700">
+              ⏳ Waiting for all team members to submit their responses. Once everyone has submitted, you'll be able to view the feedback you received.
+            </p>
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -178,12 +314,48 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
         </p>
       ) : (
         <div className="space-y-6">
+          {/* Information Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="font-semibold text-blue-800 mb-2">Who You Are Rating:</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  {myTeam.length === 0 ? (
+                    <li className="text-gray-500">No team members to rate</li>
+                  ) : (
+                    myTeam.map((member) => (
+                      <li key={member.studentId}>
+                        • {(member.student?.name && member.student.name.trim()) || member.student?.email}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-indigo-800 mb-2">Who Has Rated You:</h3>
+                {loadingWhoRatedMe ? (
+                  <p className="text-sm text-gray-500">Loading...</p>
+                ) : whoRatedMe.length === 0 ? (
+                  <p className="text-sm text-gray-500">No one has rated you yet</p>
+                ) : (
+                  <ul className="text-sm text-indigo-700 space-y-1">
+                    {whoRatedMe.map((respondent) => (
+                      <li key={respondent.id}>
+                        ✓ {(respondent.name && respondent.name.trim()) || respondent.email}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="font-medium text-lg border-b pb-2">Evaluate Your Team Members (excluding yourself)</div>
           
           <div className="space-y-6">
             {myTeam.map((member) => (
               <div key={member.studentId} className="border border-indigo-200 rounded-lg p-4 shadow-sm bg-indigo-50">
-                <div className="text-lg font-bold text-indigo-700 mb-3">For: {member.student?.name || member.student?.email}</div>
+                <div className="text-lg font-bold text-indigo-700 mb-3">For: {(member.student?.name && member.student.name.trim()) || member.student?.email}</div>
                 
                 <div className="space-y-4">
                   {assignment.survey.criteria.map((c: SurveyCriterion) => (
