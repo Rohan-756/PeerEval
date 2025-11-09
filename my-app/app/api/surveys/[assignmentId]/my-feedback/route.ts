@@ -81,9 +81,32 @@ export async function GET(
       });
     });
 
+    // Anonymize feedback: Shuffle and assign anonymous identifiers for each criterion
+    // This ensures students cannot identify who gave which feedback
+    const anonymizedFeedback: Record<string, Array<{
+      anonymousId: string;
+      text: string;
+      rating: number;
+    }>> = {};
+
+    assignment.survey.criteria.forEach((criterion) => {
+      const feedbacks = feedbackByCriterion[criterion.id] || [];
+      
+      // Shuffle feedback items randomly for each criterion
+      // This prevents students from correlating feedback across criteria
+      const shuffled = [...feedbacks].sort(() => Math.random() - 0.5);
+      
+      // Assign anonymous identifiers (Peer 1, Peer 2, etc.)
+      anonymizedFeedback[criterion.id] = shuffled.map((feedback, index) => ({
+        anonymousId: `Peer ${index + 1}`,
+        text: feedback.text,
+        rating: feedback.rating,
+      }));
+    });
+
     return NextResponse.json({
       success: true,
-      feedbackByCriterion,
+      feedbackByCriterion: anonymizedFeedback,
       criteria: assignment.survey.criteria,
       totalResponses: responses.length,
     });

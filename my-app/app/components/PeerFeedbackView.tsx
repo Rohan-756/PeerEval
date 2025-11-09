@@ -9,7 +9,8 @@ interface SurveyCriterion {
 }
 
 interface FeedbackItem {
-  respondent: { id: string; name: string | null; email: string };
+  anonymousId?: string; // For anonymized feedback
+  respondent?: { id: string; name: string | null; email: string }; // For backward compatibility
   text: string;
   rating: number;
 }
@@ -85,7 +86,7 @@ export default function PeerFeedbackView({
         Peer Feedback About You
       </h3>
       <p className="text-sm text-gray-600">
-        Here's what your teammates wrote about you for each criterion:
+        Here's what your teammates wrote about you for each criterion. Feedback is anonymized to maintain confidentiality.
       </p>
 
       {criteria.map((criterion) => {
@@ -120,12 +121,12 @@ export default function PeerFeedbackView({
             <div className="space-y-4">
               {feedbackItems.map((item, index) => (
                 <div
-                  key={`${item.respondent.id}-${index}`}
+                  key={`${item.anonymousId || item.respondent?.id || index}-${index}`}
                   className="border-l-4 border-indigo-400 bg-white p-4 rounded-r-lg shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-gray-700">
-                      {(item.respondent.name && item.respondent.name.trim()) || item.respondent.email}
+                      {item.anonymousId || (item.respondent && ((item.respondent.name && item.respondent.name.trim()) || item.respondent.email)) || "Anonymous Peer"}
                     </span>
                     <span className="text-sm font-semibold text-indigo-600 bg-indigo-100 px-3 py-1 rounded">
                       Rating: {item.rating} / {criterion.maxRating}
