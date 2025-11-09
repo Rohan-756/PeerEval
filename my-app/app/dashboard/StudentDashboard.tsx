@@ -23,6 +23,8 @@ export default function StudentDashboard({ user }: { user: any }) {
   const [invites, setInvites] = useState<FormattedInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [surveysByProject, setSurveysByProject] = useState<Record<string, any[]>>({});
+  const [completionStatus, setCompletionStatus] = useState<Record<string, boolean>>({});
+  const [downloading, setDownloading] = useState<Record<string, boolean>>({});
 
   // ✅ Fetch invites for this student
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     fetchInvites();
   }, [user.id]);
 
-  // 🆕 Load surveys for accepted projects (Unchanged)
+  // 🆕 Load surveys for accepted projects and check completion status
   useEffect(() => {
     const load = async () => {
       const accepted = invites.filter((i) => i.status === "accepted");
@@ -72,6 +74,25 @@ export default function StudentDashboard({ user }: { user: any }) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to load surveys");
             setSurveysByProject((prev) => ({ ...prev, [p.projectId]: data.assignments || [] }));
+            
+            // Check completion status for each survey
+            const assignments = data.assignments || [];
+            for (const assignment of assignments) {
+              try {
+                const completionRes = await fetch(
+                  `/api/surveys/${assignment.id}/completion-status?studentId=${user.id}`
+                );
+                const completionData = await completionRes.json();
+                if (completionRes.ok) {
+                  setCompletionStatus((prev) => ({
+                    ...prev,
+                    [assignment.id]: completionData.allSubmitted || false,
+                  }));
+                }
+              } catch (e) {
+                console.error(`Error checking completion for assignment ${assignment.id}:`, e);
+              }
+            }
           } catch (e) {
             console.error(e);
           }
@@ -79,8 +100,40 @@ export default function StudentDashboard({ user }: { user: any }) {
       );
     };
     // Only load surveys if we have loaded invites
-    if (invites.length > 0 && acceptedProjects.length > 0) load();
-  }, [invites]);
+    if (invites.length > 0) {
+      const acceptedProjects = invites.filter((i) => i.status === "accepted");
+      if (acceptedProjects.length > 0) load();
+    }
+  }, [invites, user.id]);
+
+  // Download PDF feedback report
+  const handleDownloadPDF = async (assignmentId: string, surveyTitle: string) => {
+    try {
+      setDownloading((prev) => ({ ...prev, [assignmentId]: true }));
+      const res = await fetch(`/api/surveys/${assignmentId}/download-pdf?studentId=${user.id}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to download PDF");
+      }
+
+      // Get the PDF blob
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `feedback-report-${surveyTitle}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Failed to download PDF");
+    } finally {
+      setDownloading((prev) => ({ ...prev, [assignmentId]: false }));
+    }
+  };
 
   // ✅ Accept or reject invite (Unchanged)
   const handleRespond = async (inviteId: string, status: "accepted" | "rejected") => {
@@ -176,19 +229,55 @@ export default function StudentDashboard({ user }: { user: any }) {
                     <p className="text-sm text-gray-500 italic">No surveys assigned for this project yet.</p>
                   ) : (
                     <ul className="mt-1 space-y-2">
-                      {surveysByProject[p.projectId].map((a) => (
-                        <li key={a.id} className="text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 bg-white rounded-md border border-green-100">
-                          <div className="flex items-center gap-3 font-medium">
-                            <span className="text-gray-800">{a.survey?.title}</span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-1 sm:mt-0">
-                            <span className="text-xs text-gray-600">Due {new Date(a.deadline).toLocaleString()}</span>
-                            <a href={`/projects/${p.projectId}/surveys/${a.id}`} className="text-indigo-700 font-semibold hover:text-indigo-900 transition-colors bg-indigo-100 px-2 py-0.5 rounded-full">
-                                Start Survey
-                            </a>
-                          </div>
-                        </li>
-                      ))}
+                      {surveysByProject[p.projectId].map((a) => {
+                        const isCompleted = completionStatus[a.id] || false;
+                        const isDownloading = downloading[a.id] || false;
+                        return (
+                          <li key={a.id} className="text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 bg-white rounded-md border border-green-100">
+                            <div className="flex items-center gap-3 font-medium">
+                              <span className="text-gray-800">{a.survey?.title}</span>
+                              {isCompleted && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                  Completed
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1 sm:mt-0">
+                              <span className="text-xs text-gray-600">Due {new Date(a.deadline).toLocaleString()}</span>
+                              <a 
+                                href={`/projects/${p.projectId}/surveys/${a.id}`} 
+                                className="text-indigo-700 font-semibold hover:text-indigo-900 transition-colors bg-indigo-100 px-2 py-0.5 rounded-full"
+                              >
+                                {isCompleted ? "View Survey" : "Start Survey"}
+                              </a>
+                              {isCompleted && (
+                                <button
+                                  onClick={() => handleDownloadPDF(a.id, a.survey?.title || "Survey")}
+                                  disabled={isDownloading}
+                                  className="text-green-700 font-semibold hover:text-green-900 transition-colors bg-green-100 px-2 py-0.5 rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                >
+                                  {isDownloading ? (
+                                    <>
+                                      <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                      Downloading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                      Download PDF
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
