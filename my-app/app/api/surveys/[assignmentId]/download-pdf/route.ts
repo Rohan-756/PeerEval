@@ -127,7 +127,7 @@ export async function GET(
       },
     });
 
-    // Structure feedback by criterion
+    // Structure feedback by criterion (with respondent info for anonymization)
     const feedbackByCriterion: Record<
       string,
       Array<{
@@ -154,10 +154,33 @@ export async function GET(
       });
     });
 
-    // Calculate average ratings per criterion
+    // Anonymize feedback: Shuffle and assign anonymous identifiers for each criterion
+    // This ensures students cannot identify who gave which feedback in the PDF
+    const anonymizedFeedback: Record<string, Array<{
+      anonymousId: string;
+      text: string;
+      rating: number;
+    }>> = {};
+
+    assignment.survey.criteria.forEach((criterion) => {
+      const feedbacks = feedbackByCriterion[criterion.id] || [];
+      
+      // Shuffle feedback items randomly for each criterion
+      // This prevents students from correlating feedback across criteria
+      const shuffled = [...feedbacks].sort(() => Math.random() - 0.5);
+      
+      // Assign anonymous identifiers (Peer 1, Peer 2, etc.)
+      anonymizedFeedback[criterion.id] = shuffled.map((feedback, index) => ({
+        anonymousId: `Peer ${index + 1}`,
+        text: feedback.text,
+        rating: feedback.rating,
+      }));
+    });
+
+    // Calculate average ratings per criterion using anonymized feedback
     const criterionAverages: Record<string, number> = {};
     assignment.survey.criteria.forEach((criterion) => {
-      const feedbacks = feedbackByCriterion[criterion.id];
+      const feedbacks = anonymizedFeedback[criterion.id];
       if (feedbacks.length > 0) {
         const sum = feedbacks.reduce((acc, f) => acc + f.rating, 0);
         criterionAverages[criterion.id] = Math.round((sum / feedbacks.length) * 100) / 100;
@@ -237,7 +260,11 @@ export async function GET(
     doc.text(`Total Responses Received: ${responses.length}`, margin + 5, yPosition);
     yPosition += 6;
     doc.text(`Total Criteria: ${assignment.survey.criteria.length}`, margin + 5, yPosition);
-    yPosition += 15;
+    yPosition += 8;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "italic");
+    doc.text("Note: All feedback has been anonymized to maintain confidentiality.", margin + 5, yPosition);
+    yPosition += 10;
 
     // Feedback by criterion
     checkPageBreak(20);
@@ -247,7 +274,7 @@ export async function GET(
     yPosition += 15;
 
     assignment.survey.criteria.forEach((criterion, index) => {
-      const feedbacks = feedbackByCriterion[criterion.id];
+      const feedbacks = anonymizedFeedback[criterion.id];
       const average = criterionAverages[criterion.id];
 
       checkPageBreak(30);
@@ -274,8 +301,8 @@ export async function GET(
           
           doc.setFontSize(9);
           doc.setFont("helvetica", "bold");
-          const respondentName = feedback.respondent.name || feedback.respondent.email;
-          doc.text(`Feedback from ${respondentName}:`, margin + 10, yPosition);
+          // Use anonymous identifier instead of respondent name
+          doc.text(`Feedback from ${feedback.anonymousId}:`, margin + 10, yPosition);
           yPosition += 6;
           
           doc.setFont("helvetica", "normal");
