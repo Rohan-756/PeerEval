@@ -251,19 +251,16 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-indigo-800 mb-2">Who Has Rated You:</h3>
+              <h3 className="font-semibold text-indigo-800 mb-2">Submission Status:</h3>
               {loadingWhoRatedMe ? (
                 <p className="text-sm text-gray-500">Loading...</p>
               ) : whoRatedMe.length === 0 ? (
                 <p className="text-sm text-gray-500">No one has rated you yet</p>
               ) : (
-                <ul className="text-sm text-indigo-700 space-y-1">
-                  {whoRatedMe.map((respondent) => (
-                    <li key={respondent.id}>
-                      ✓ {(respondent.name && respondent.name.trim()) || respondent.email}
-                    </li>
-                  ))}
-                </ul>
+                <div className="text-sm text-indigo-700">
+                  <p className="mb-1">{whoRatedMe.length} team member(s) have submitted feedback about you.</p>
+                  <p className="text-xs text-gray-600 italic">Feedback is anonymized to maintain confidentiality.</p>
+                </div>
               )}
             </div>
           </div>
@@ -332,19 +329,16 @@ export default function StudentSurveyResponse({ assignment, projectId }: { assig
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold text-indigo-800 mb-2">Who Has Rated You:</h3>
+                <h3 className="font-semibold text-indigo-800 mb-2">Submission Status:</h3>
                 {loadingWhoRatedMe ? (
                   <p className="text-sm text-gray-500">Loading...</p>
                 ) : whoRatedMe.length === 0 ? (
                   <p className="text-sm text-gray-500">No one has rated you yet</p>
                 ) : (
-                  <ul className="text-sm text-indigo-700 space-y-1">
-                    {whoRatedMe.map((respondent) => (
-                      <li key={respondent.id}>
-                        ✓ {(respondent.name && respondent.name.trim()) || respondent.email}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="text-sm text-indigo-700">
+                    <p>{whoRatedMe.length} team member(s) have submitted feedback.</p>
+                    <p className="text-xs text-gray-600 italic mt-1">Feedback will be anonymized when viewing.</p>
+                  </div>
                 )}
               </div>
             </div>
