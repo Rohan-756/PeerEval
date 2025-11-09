@@ -2,8 +2,10 @@
 
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SurveyManager({ projectId, instructorId }: { projectId: string; instructorId: string; }) {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -247,10 +249,27 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
           {assignments
             .filter((a) => !(isStudent && submittedMap[a.id]))
             .map((a) => (
-            <li key={a.id} className="p-3 border rounded-md">
+            <li 
+              key={a.id} 
+              className={`p-3 border rounded-md ${
+                isInstructorOwner 
+                  ? "cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors" 
+                  : ""
+              }`}
+              onClick={() => {
+                if (isInstructorOwner) {
+                  router.push(`/projects/${projectId}/surveys/${a.id}/results`);
+                }
+              }}
+            >
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{a.survey?.title}</div>
+                <div className="flex-1">
+                  <div className="font-medium flex items-center gap-2">
+                    {a.survey?.title}
+                    {isInstructorOwner && (
+                      <span className="text-xs text-indigo-600">(Click to view results)</span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-600">Deadline: {new Date(a.deadline).toLocaleString()}</div>
                 </div>
                 <span className="text-xs px-2 py-1 rounded bg-indigo-50 text-indigo-700">{a.status}</span>
@@ -268,12 +287,12 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                   <a 
                     href={`/projects/${projectId}/surveys/${a.id}`} 
                     className="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 text-sm font-medium"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Go to Survey Page
                   </a>
                 </div>
               )}
-              {/* instructor view of responses removed */}
             </li>
           ))}
         </ul>
