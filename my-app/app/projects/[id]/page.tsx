@@ -50,10 +50,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   const projectId = resolvedParams.id;
 
   // --- Client-side authorization pattern ---
-  // Default values are used here. Authorization logic is handled in client components
+  // Authorization logic is handled in client components
   // (InviteButton, TeamManager, SurveyManager) via sessionStorage.
-  const currentUserRole = "student"; 
-  const currentUserId = ""; 
   // ------------------------------------------
 
   const [project, availableStudents] = await Promise.all([
@@ -112,7 +110,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <div className="lg:col-span-1">
             <SurveyManager 
                 projectId={projectId} 
-                userRole={currentUserRole} 
                 instructorId={instructorId} 
             />
           </div>
@@ -122,8 +119,6 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
                 projectId={projectId} 
                 availableStudents={availableStudents}
                 existingTeams={project.teams}
-                userRole={currentUserRole} 
-                currentUserId={currentUserId}
             />
           </div>
         </div>

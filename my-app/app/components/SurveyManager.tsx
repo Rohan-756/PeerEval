@@ -1,9 +1,11 @@
 // my-app/app/components/SurveyManager.tsx
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SurveyManager({ projectId, instructorId }: { projectId: string; instructorId: string; }) {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +14,8 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
     { label: "Teamwork" },
   ]);
   const [submitting, setSubmitting] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const deadlineInputRef = useRef<HTMLInputElement>(null);
 
   const isInstructorOwner = currentUser?.role === "instructor" && currentUser?.id === instructorId;
   const isStudent = currentUser?.role === "student";
@@ -68,11 +72,57 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
 
   // no instructor response viewing
 
-  const handleAssign = async () => {
-    if (!form.title.trim() || !form.deadline) {
-      alert("Enter a title and deadline");
+  const handleAssign = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Always read from the actual DOM inputs first (most reliable)
+    // This ensures we get the actual current value even if React state is stale
+    const titleEl = titleInputRef.current;
+    const deadlineEl = deadlineInputRef.current;
+    
+    const titleValue = (titleEl?.value || form.title || "").trim();
+    const deadlineValue = (deadlineEl?.value || form.deadline || "").trim();
+    
+    // Debug: log what we're checking
+    console.log("Validation check:", {
+      titleFromRef: titleEl?.value,
+      titleFromState: form.title,
+      titleValue,
+      deadlineFromRef: deadlineEl?.value,
+      deadlineFromState: form.deadline,
+      deadlineValue,
+      hasTitle: !!titleValue,
+      hasDeadline: !!deadlineValue
+    });
+    
+    if (!titleValue) {
+      alert("Please enter a survey title");
+      titleEl?.focus();
       return;
     }
+    
+    if (!deadlineValue) {
+      alert("Please enter a deadline");
+      deadlineEl?.focus();
+      return;
+    }
+    
+    // Validate that deadline is a valid date
+    const deadlineDate = new Date(deadlineValue);
+    if (isNaN(deadlineDate.getTime())) {
+      alert("Please enter a valid deadline date and time");
+      deadlineEl?.focus();
+      return;
+    }
+    
+    // Also check if deadline is in the past
+    if (deadlineDate.getTime() < Date.now()) {
+      alert("Deadline must be in the future");
+      deadlineEl?.focus();
+      return;
+    }
+    
     setSubmitting(true);
     try {
       const res = await fetch("/api/surveys/assign", {
@@ -81,11 +131,11 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
         body: JSON.stringify({
           projectId,
           creatorId: currentUser?.id,
-          title: form.title,
-          description: form.description,
-          deadline: form.deadline,
-          criteria: criteria.map((c, index) => ({
-            label: c.label,
+          title: titleValue,
+          description: (form.description || "").trim(),
+          deadline: deadlineValue,
+          criteria: criteria.filter(c => c.label.trim()).map((c, index) => ({
+            label: c.label.trim(),
             order: index + 1,
           })),
         }),
@@ -93,10 +143,13 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to assign survey");
       setForm({ title: "", description: "", deadline: "" });
+      // Clear input refs to ensure they're reset
+      if (titleEl) titleEl.value = "";
+      if (deadlineEl) deadlineEl.value = "";
       setAssignments((prev) => [data.assignment, ...prev]);
       alert("✅ Survey assigned!");
     } catch (e: any) {
-      console.error(e);
+      console.error("Error assigning survey:", e);
       alert(e.message || "Error assigning survey");
     } finally {
       setSubmitting(false);
@@ -110,24 +163,32 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
         <div className="mb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <input
+              ref={titleInputRef}
               type="text"
               placeholder="Survey Title"
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-indigo-200"
               value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                setForm(prev => ({ ...prev, title: value }));
+              }}
             />
             <input
+              ref={deadlineInputRef}
               type="datetime-local"
               className="w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-indigo-200"
               value={form.deadline}
-              onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                setForm(prev => ({ ...prev, deadline: value }));
+              }}
             />
             <textarea
               placeholder="Optional Description"
               className="md:col-span-2 w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-indigo-200"
               rows={3}
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
             />
           </div>
           {/* Prompt builder */}
@@ -168,6 +229,7 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
           </div>
           <div className="mt-3">
             <button
+              type="button"
               onClick={handleAssign}
               disabled={submitting}
               className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition font-medium disabled:opacity-50"
@@ -187,10 +249,27 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
           {assignments
             .filter((a) => !(isStudent && submittedMap[a.id]))
             .map((a) => (
-            <li key={a.id} className="p-3 border rounded-md">
+            <li 
+              key={a.id} 
+              className={`p-3 border rounded-md ${
+                isInstructorOwner 
+                  ? "cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-colors" 
+                  : ""
+              }`}
+              onClick={() => {
+                if (isInstructorOwner) {
+                  router.push(`/projects/${projectId}/surveys/${a.id}/results`);
+                }
+              }}
+            >
               <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{a.survey?.title}</div>
+                <div className="flex-1">
+                  <div className="font-medium flex items-center gap-2">
+                    {a.survey?.title}
+                    {isInstructorOwner && (
+                      <span className="text-xs text-indigo-600">(Click to view results)</span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-600">Deadline: {new Date(a.deadline).toLocaleString()}</div>
                 </div>
                 <span className="text-xs px-2 py-1 rounded bg-indigo-50 text-indigo-700">{a.status}</span>
@@ -208,12 +287,12 @@ export default function SurveyManager({ projectId, instructorId }: { projectId: 
                   <a 
                     href={`/projects/${projectId}/surveys/${a.id}`} 
                     className="inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 text-sm font-medium"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Go to Survey Page
                   </a>
                 </div>
               )}
-              {/* instructor view of responses removed */}
             </li>
           ))}
         </ul>
