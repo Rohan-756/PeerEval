@@ -123,7 +123,7 @@ describe('GET /api/surveys/[assignmentId]/results', () => {
     // Check average ratings are calculated correctly
     const criterion1Result = data.aggregatedResults.find((r: any) => r.criterionId === 'criterion1');
     expect(criterion1Result).toBeDefined();
-    expect(criterion1Result.averageRating).toBe(4.5); // (5 + 4) / 2
+    expect(criterion1Result.averageRating).toBe(4.5); // (5 + 4) / 2 = 4.5
     expect(criterion1Result.totalResponses).toBe(2);
 
     const criterion2Result = data.aggregatedResults.find((r: any) => r.criterionId === 'criterion2');
