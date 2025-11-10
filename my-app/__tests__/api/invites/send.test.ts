@@ -20,6 +20,7 @@ jest.mock('@/lib/prisma', () => ({
 describe('POST /api/invites/send', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset all mocks before each test to ensure clean state
   });
 
   it('should return 400 if required fields are missing', async () => {
