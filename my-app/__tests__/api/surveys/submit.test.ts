@@ -27,7 +27,7 @@ describe('POST /api/surveys/submit', () => {
   it('should return 400 if required fields are missing', async () => {
     const req = new Request('http://localhost/api/surveys/submit', {
       method: 'POST',
-      body: JSON.stringify({ assignmentId: 'assignment1' }),
+      body: JSON.stringify({ assignmentId: 'assignment1' }), // Missing respondentId, projectId, answers
     });
 
     const response = await POST(req);
