@@ -1,9 +1,15 @@
-import { POST } from '@/app/api/auth/reset/route';
-import { prisma } from '@/lib/prisma';
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
+// Mock dependencies before importing the route
+var mockSendMailFn: jest.Mock;
 
-// Mock dependencies
+jest.mock('nodemailer', () => {
+  mockSendMailFn = jest.fn();
+  return {
+    createTransport: jest.fn(() => ({
+      sendMail: mockSendMailFn,
+    })),
+  };
+});
+
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -13,25 +19,21 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-jest.mock('nodemailer', () => ({
-  createTransport: jest.fn(() => ({
-    sendMail: jest.fn(),
-  })),
-}));
-
 jest.mock('crypto', () => ({
   randomBytes: jest.fn(),
 }));
 
-describe('POST /api/auth/reset', () => {
-  const mockSendMail = jest.fn();
+// Import after mocks are set up
+import { POST } from '@/app/api/auth/reset/route';
+import { prisma } from '@/lib/prisma';
+import crypto from 'crypto';
 
+describe('POST /api/auth/reset', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (nodemailer.createTransport as jest.Mock).mockReturnValue({
-      sendMail: mockSendMail,
-    });
-    mockSendMail.mockResolvedValue({ messageId: 'test-message-id' });
+    if (mockSendMailFn) {
+      mockSendMailFn.mockResolvedValue({ messageId: 'test-message-id' });
+    }
   });
 
   it('should return 400 if email is missing', async () => {
@@ -98,13 +100,15 @@ describe('POST /api/auth/reset', () => {
       },
     });
 
-    // Verify email was sent
-    expect(mockSendMail).toHaveBeenCalledWith({
-      from: expect.stringContaining('PeerEval'),
-      to: 'test@example.com',
-      subject: 'Password Reset Request',
-      html: expect.stringContaining('reset-password'),
-    });
+    // Verify email was sent - check that sendMail was called
+    expect(mockSendMailFn).toHaveBeenCalled();
+    const emailCall = mockSendMailFn.mock.calls[0]?.[0];
+    if (emailCall) {
+      expect(emailCall.from).toContain('PeerEval');
+      expect(emailCall.to).toBe('test@example.com');
+      expect(emailCall.subject).toBe('Password Reset Request');
+      expect(emailCall.html).toContain('reset-password');
+    }
   });
 
   it('should set token expiry to 1 hour from now', async () => {
@@ -154,9 +158,12 @@ describe('POST /api/auth/reset', () => {
 
     await POST(req);
 
-    const emailCall = mockSendMail.mock.calls[0][0];
-    expect(emailCall.html).toContain('reset-password');
-    expect(emailCall.html).toContain('token=');
+    expect(mockSendMailFn).toHaveBeenCalled();
+    const emailCall = mockSendMailFn.mock.calls[0]?.[0];
+    if (emailCall) {
+      expect(emailCall.html).toContain('reset-password');
+      expect(emailCall.html).toContain('token=');
+    }
   });
 
   it('should return 500 on internal server error', async () => {
@@ -184,7 +191,10 @@ describe('POST /api/auth/reset', () => {
     (crypto.randomBytes as jest.Mock).mockReturnValue(mockToken);
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
     (prisma.user.update as jest.Mock).mockResolvedValue(mockUser);
-    mockSendMail.mockRejectedValue(new Error('Email send failed'));
+    
+    // Reset the mock and set it to reject
+    mockSendMailFn.mockReset();
+    mockSendMailFn.mockRejectedValue(new Error('Email send failed'));
 
     const req = new Request('http://localhost/api/auth/reset', {
       method: 'POST',
