@@ -21,7 +21,7 @@ describe('POST /api/projects/create', () => {
   it('should return 400 if required fields are missing', async () => {
     const req = new Request('http://localhost/api/projects/create', {
       method: 'POST',
-      body: JSON.stringify({ title: 'Test Project' }),
+      body: JSON.stringify({ title: 'Test Project' }), // Missing description and instructorId
     });
 
     const response = await POST(req);
