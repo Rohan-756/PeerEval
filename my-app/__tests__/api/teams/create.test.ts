@@ -22,6 +22,7 @@ describe('POST /api/teams/create', () => {
   it('should return 400 if projectId is missing', async () => {
     const req = new Request('http://localhost/api/teams/create', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ studentIds: ['student1'] }),
     });
 
