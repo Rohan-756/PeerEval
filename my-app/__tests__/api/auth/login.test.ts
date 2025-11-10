@@ -1,9 +1,8 @@
 import { POST } from '@/app/api/auth/login/route';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { NextResponse } from 'next/server';
 
-// Mock dependencies
+// Mock dependencies for login route tests
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
