@@ -20,7 +20,7 @@ jest.mock('@prisma/client', () => {
 });
 
 jest.mock('bcryptjs', () => ({
-  hash: jest.fn(),
+  hash: jest.fn(), // Mock bcrypt hash function for password hashing
 }));
 
 describe('POST /api/auth/register', () => {
