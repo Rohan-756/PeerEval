@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/surveys/[assignmentId]/who-rated-me/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/surveys/[assignmentId]/who-rated-me route
+ * Tests retrieval of respondents who have rated a specific target student
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     surveyResponse: {
@@ -15,7 +18,7 @@ describe('GET /api/surveys/[assignmentId]/who-rated-me', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 400 if assignmentId is missing', async () => {
+  it('should return 400 when assignmentId parameter is missing', async () => {
     const req = new Request('http://localhost/api/surveys/who-rated-me', {
       method: 'GET',
     });
@@ -28,7 +31,7 @@ describe('GET /api/surveys/[assignmentId]/who-rated-me', () => {
     expect(data.error).toContain('assignmentId and targetStudentId are required');
   });
 
-  it('should return 400 if targetStudentId is missing', async () => {
+  it('should return 400 when targetStudentId query parameter is missing', async () => {
     const req = new Request('http://localhost/api/surveys/assignment1/who-rated-me', {
       method: 'GET',
     });
@@ -41,7 +44,7 @@ describe('GET /api/surveys/[assignmentId]/who-rated-me', () => {
     expect(data.error).toContain('assignmentId and targetStudentId are required');
   });
 
-  it('should return list of respondents who rated the target student', async () => {
+  it('should return list of unique respondents who have rated the target student', async () => {
     const mockResponses = [
       {
         respondentId: 'student1',
