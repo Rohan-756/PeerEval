@@ -1,7 +1,10 @@
 import { DELETE } from '@/app/api/projects/delete/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for DELETE /api/projects/delete route
+ * Tests project deletion with cascading deletes for related entities
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     project: {
@@ -28,7 +31,7 @@ describe('DELETE /api/projects/delete', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 404 if project not found', async () => {
+  it('should return 404 when project does not exist', async () => {
     (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
 
     const req = new Request('http://localhost/api/projects/delete', {
@@ -71,7 +74,7 @@ describe('DELETE /api/projects/delete', () => {
     expect(data.error).toBe('Unauthorized');
   });
 
-  it('should delete project successfully with cascading deletes', async () => {
+  it('should successfully delete project and all related entities (cascading delete)', async () => {
     const mockProject = {
       id: 'project1',
       instructorId: 'instructor1',
@@ -127,7 +130,7 @@ describe('DELETE /api/projects/delete', () => {
     });
   });
 
-  it('should handle project with no teams or assignments', async () => {
+  it('should handle project deletion when project has no teams or assignments', async () => {
     const mockProject = {
       id: 'project1',
       instructorId: 'instructor1',

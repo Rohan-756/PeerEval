@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/projects/[projectId]/unassigned-students/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/projects/[projectId]/unassigned-students route
+ * Tests retrieval of students who have accepted invites but are not yet assigned to teams
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -15,7 +18,7 @@ describe('GET /api/projects/[projectId]/unassigned-students', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 400 if projectId is missing', async () => {
+  it('should return 400 when projectId parameter is missing', async () => {
     const req = new Request('http://localhost/api/projects/unassigned-students', {
       method: 'GET',
     });

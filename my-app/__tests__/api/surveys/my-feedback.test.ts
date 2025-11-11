@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/surveys/[assignmentId]/my-feedback/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/surveys/[assignmentId]/my-feedback route
+ * Tests retrieval of anonymized feedback received by a target student
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     surveyAssignment: {
