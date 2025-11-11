@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/surveys/[assignmentId]/responses/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/surveys/[assignmentId]/responses route
+ * Tests retrieval of all survey responses for a given assignment
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     surveyResponse: {
@@ -15,7 +18,7 @@ describe('GET /api/surveys/[assignmentId]/responses', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 400 if assignmentId is missing', async () => {
+  it('should return 400 when assignmentId parameter is missing', async () => {
     const req = new Request('http://localhost/api/surveys/responses', {
       method: 'GET',
     });
@@ -28,7 +31,7 @@ describe('GET /api/surveys/[assignmentId]/responses', () => {
     expect(data.error).toContain('assignmentId required');
   });
 
-  it('should return all survey responses for an assignment', async () => {
+  it('should return all survey responses for an assignment ordered by submission date', async () => {
     const mockResponses = [
       {
         id: 'response1',
