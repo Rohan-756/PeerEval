@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/surveys/[assignmentId]/my-status/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/surveys/[assignmentId]/my-status route
+ * Tests checking submission status for a respondent in an assignment
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     surveyResponse: {
@@ -15,7 +18,7 @@ describe('GET /api/surveys/[assignmentId]/my-status', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 400 if assignmentId is missing', async () => {
+  it('should return 400 when assignmentId parameter is missing', async () => {
     const req = new Request('http://localhost/api/surveys/my-status?respondentId=student1', {
       method: 'GET',
     });
@@ -28,7 +31,7 @@ describe('GET /api/surveys/[assignmentId]/my-status', () => {
     expect(data.error).toContain('assignmentId and respondentId are required');
   });
 
-  it('should return 400 if respondentId is missing', async () => {
+  it('should return 400 when respondentId query parameter is missing', async () => {
     const req = new Request('http://localhost/api/surveys/assignment1/my-status', {
       method: 'GET',
     });
@@ -41,7 +44,7 @@ describe('GET /api/surveys/[assignmentId]/my-status', () => {
     expect(data.error).toContain('assignmentId and respondentId are required');
   });
 
-  it('should return submitted: true if responses exist', async () => {
+  it('should return submitted: true when respondent has submitted responses', async () => {
     (prisma.surveyResponse.count as jest.Mock).mockResolvedValue(3);
 
     const req = new Request('http://localhost/api/surveys/assignment1/my-status?respondentId=student1', {
@@ -63,7 +66,7 @@ describe('GET /api/surveys/[assignmentId]/my-status', () => {
     });
   });
 
-  it('should return submitted: false if no responses exist', async () => {
+  it('should return submitted: false when respondent has not submitted any responses', async () => {
     (prisma.surveyResponse.count as jest.Mock).mockResolvedValue(0);
 
     const req = new Request('http://localhost/api/surveys/assignment1/my-status?respondentId=student1', {
