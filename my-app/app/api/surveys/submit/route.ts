@@ -19,10 +19,18 @@ export async function POST(req: Request) {
     }
 
     const assignment = await prisma.surveyAssignment.findFirst({
-      where: { id: assignmentId, projectId },
+      where: { id: assignmentId },
       include: { project: true },
     });
     if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+
+    // Use the assignment's projectId instead of trusting client-provided one
+    const actualProjectId = assignment.projectId;
+    
+    // Verify the projectId matches (if provided)
+    if (projectId && projectId !== actualProjectId) {
+      return NextResponse.json({ error: "Project ID mismatch" }, { status: 400 });
+    }
 
     // Deadline check
     if (new Date(assignment.deadline).getTime() < Date.now()) {
@@ -31,10 +39,25 @@ export async function POST(req: Request) {
 
     // Ensure respondent is part of a team in this project
     const myTeam = await prisma.team.findFirst({
-      where: { projectId, members: { some: { studentId: respondentId } } },
+      where: { projectId: actualProjectId, members: { some: { studentId: respondentId } } },
       include: { members: true },
     });
-    if (!myTeam) return NextResponse.json({ error: "Respondent not part of a team for this project" }, { status: 400 });
+    if (!myTeam) {
+      // Check if student is at least invited to the project
+      const invite = await prisma.invite.findFirst({
+        where: { 
+          projectId: actualProjectId, 
+          studentId: respondentId,
+          status: "accepted"
+        },
+      });
+      
+      if (!invite) {
+        return NextResponse.json({ error: "You are not assigned to this project. Please accept the project invite first." }, { status: 400 });
+      }
+      
+      return NextResponse.json({ error: "You are not part of a team for this project. Please contact your instructor to be added to a team." }, { status: 400 });
+    }
 
     // Validate targets are in the same team
     const teamMemberIds = new Set(myTeam.members.map((m) => m.studentId));

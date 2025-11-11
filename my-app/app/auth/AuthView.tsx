@@ -9,6 +9,7 @@ export default function AuthView({handlePasswordReset, setView, setIsLoading, se
   const router = useRouter();
 
   const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"student" | "instructor">("student");
@@ -18,7 +19,8 @@ export default function AuthView({handlePasswordReset, setView, setIsLoading, se
     e.preventDefault();
     setError("");
     if (!email || !password) return setError("Please fill email and password");
-    handleAuthAction(isRegistering ? "register" : "login", email, password, isRegistering ? role : undefined);
+    if (isRegistering && !name) return setError("Please fill name, email and password");
+    handleAuthAction(isRegistering ? "register" : "login", email, password, isRegistering ? role : undefined, isRegistering ? name : undefined);
   };
   // Handle password reset click
   const handleResetClick = () => {
@@ -27,13 +29,13 @@ export default function AuthView({handlePasswordReset, setView, setIsLoading, se
   };
 
   // AuthView.tsx (only the handleAuthAction part shown — replace your existing handler)
-const handleAuthAction = async (action: 'register' | 'login', email?: string, password?: string, role?: 'student' | 'instructor') => {
+const handleAuthAction = async (action: 'register' | 'login', email?: string, password?: string, role?: 'student' | 'instructor', name?: string) => {
   setIsLoading(true);
   try {
     const res = await fetch(`/api/auth/${action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role }),
+      body: JSON.stringify({ email, password, role, name }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -41,8 +43,8 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
       return;
     }
 
-    // Expect server to return { user: { id, email, role } }
-    const fullUser = data.user ?? { id: data.userId, email, role: data.role ?? role ?? 'student' };
+    // Expect server to return { user: { id, email, name, role } }
+    const fullUser = data.user ?? { id: data.userId, email, name: data.name || name, role: data.role ?? role ?? 'student' };
 
     // update top-level user state immediately
     setUser((prev: any) => ({ ...prev, ...fullUser }));
@@ -69,12 +71,23 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
         </h2>
 
         <form onSubmit={handleSubmit}>
+          {isRegistering && (
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-3 border rounded mb-4"
+              required
+            />
+          )}
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full p-3 border rounded mb-4"
+            required
           />
           <input
             type="password"
@@ -82,6 +95,7 @@ const handleAuthAction = async (action: 'register' | 'login', email?: string, pa
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-3 border rounded mb-4"
+            required
           />
 
           {isRegistering && (

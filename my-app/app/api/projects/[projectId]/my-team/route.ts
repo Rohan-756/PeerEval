@@ -1,3 +1,4 @@
+// my-app/app/api/projects/[projectId]/my-team/route.ts (Correction)
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -6,35 +7,47 @@ export async function GET(
   context: { params: Promise<{ projectId: string }> }
 ) {
   try {
+    const { projectId } = await context.params;
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId");
-    const { projectId } = await context.params;
 
-    if (!studentId || !projectId) {
-      return NextResponse.json({ error: "studentId and projectId are required" }, { status: 400 });
+    if (!studentId) {
+      return NextResponse.json({ error: "studentId is required" }, { status: 400 });
     }
 
-    // Find the team for this student in this project
-    const team = await prisma.team.findFirst({
+    // 1. Find the TeamMember record for the current student in this project
+    const studentTeam = await prisma.teamMember.findFirst({
       where: {
-        projectId,
-        members: { some: { studentId } },
+        studentId: studentId,
+        team: {
+          projectId: projectId,
+        },
       },
-      include: {
-        members: { include: { student: { select: { id: true, name: true, email: true } } } },
+      select: {
+        teamId: true,
       },
     });
 
-    if (!team) {
-      return NextResponse.json({ team: null, members: [] });
+    if (!studentTeam) {
+      // Student is not in a team for this project
+      return NextResponse.json({ success: true, members: [] });
     }
 
-    const members = team.members.map((m) => m.student);
-    return NextResponse.json({ teamId: team.id, members });
+    // 2. Fetch all members of that team, including their User details
+    const teamMembers = await prisma.teamMember.findMany({
+      where: {
+        teamId: studentTeam.teamId,
+      },
+      include: {
+        student: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true, members: teamMembers });
   } catch (err) {
-    console.error("Error fetching team members:", err);
+    console.error("Error loading student's team:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-

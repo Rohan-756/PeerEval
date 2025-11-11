@@ -23,8 +23,10 @@ const customJestConfig = {
     "^@/app/(.*)$": "<rootDir>/app/$1",
     // Add any other aliases you have
   },
-  // Ignore node_modules, .next
-  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
+  // Ignore node_modules, .next, and setup files
+  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/", "<rootDir>/__tests__/setup.ts"],
+  // Only run files that match test pattern
+  testMatch: ["**/__tests__/**/*.test.ts", "**/__tests__/**/*.test.tsx"],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
