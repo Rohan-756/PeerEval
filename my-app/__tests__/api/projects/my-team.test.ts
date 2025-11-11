@@ -1,7 +1,10 @@
 import { GET } from '@/app/api/projects/[projectId]/my-team/route';
 import { prisma } from '@/lib/prisma';
 
-// Mock dependencies
+/**
+ * Test suite for GET /api/projects/[projectId]/my-team route
+ * Tests retrieval of team members for a student in a project
+ */
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     teamMember: {
@@ -16,7 +19,7 @@ describe('GET /api/projects/[projectId]/my-team', () => {
     jest.clearAllMocks();
   });
 
-  it('should return 400 if studentId is missing', async () => {
+  it('should return 400 when studentId query parameter is missing', async () => {
     const req = new Request('http://localhost/api/projects/project1/my-team', {
       method: 'GET',
     });
@@ -29,7 +32,7 @@ describe('GET /api/projects/[projectId]/my-team', () => {
     expect(data.error).toContain('studentId is required');
   });
 
-  it('should return empty members array if student is not in a team', async () => {
+  it('should return empty members array when student is not part of any team', async () => {
     (prisma.teamMember.findFirst as jest.Mock).mockResolvedValue(null);
 
     const req = new Request('http://localhost/api/projects/project1/my-team?studentId=student1', {
@@ -45,7 +48,7 @@ describe('GET /api/projects/[projectId]/my-team', () => {
     expect(data.members).toHaveLength(0);
   });
 
-  it('should return team members for a student in a team', async () => {
+  it('should return all team members when student belongs to a team', async () => {
     const mockStudentTeam = {
       teamId: 'team1',
     };
