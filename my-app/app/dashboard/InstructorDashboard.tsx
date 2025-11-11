@@ -48,6 +48,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
       setRefreshKey(prev => prev + 1); // Increments key to trigger useEffect
   }
 
+  // (surveys are managed on the project page)
+
   // ✅ Create a new project
   const handleAddProject = async () => {
     if (!newProject.title.trim() || !newProject.description.trim()) {
@@ -146,6 +148,8 @@ export default function InstructorDashboard({ user }: { user: any }) {
           />
         )}
       </section>
+
+      {/* (Survey assignment moved to the project page) */}
     </div>
   );
 }

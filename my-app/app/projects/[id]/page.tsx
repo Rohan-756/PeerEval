@@ -1,3 +1,4 @@
+// my-app/app/projects/[id]/page.tsx
 import Header from "@/app/components/Header";
 import { prisma } from "@/lib/prisma";
 import TeamManager from "@/app/components/TeamManager";
