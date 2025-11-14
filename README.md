@@ -1,118 +1,92 @@
-# Online Peer Evaluation Tool
+# PeerEval: Online Peer Evaluation Tool
 
-**Project ID:** P45  
-**Course:** UE23CS341A  
-**Academic Year:** 2025  
-**Semester:** 5th Sem  
-**Campus:** RR  
-**Branch:** AIML  
-**Section:** D  
-**Team:** jaljira
+### Modernizing Team Feedback and Performance Review
 
-## 📋 Project Description
+PeerEval is a comprehensive full-stack application designed to streamline the peer-review process for collaborative environments, such as project-based learning, corporate team assessments, or hackathons. It moves away from cumbersome manual spreadsheets by providing a centralized platform for team members to rate their peers based on predefined criteria, generating aggregated scores and personalized feedback reports. 
 
-A system for team-based projects where members rate peers on predefined criteria, aggregate scores, and generate feedback summaries. The project includes survey forms, scoring algorithms, and PDF report export.
+## ✨ Features
 
-This repository contains the source code and documentation for the Online Peer Evaluation Tool project, developed as part of the UE23CS341A course at PES University.
+* **Role-Based Access:** Separate dashboards for Instructors/Managers (creating projects, managing teams, assigning surveys) and Students/Employees (taking surveys, viewing personalized feedback).
+* **Dynamic Survey Creation:** Define projects, teams, and custom evaluation criteria (e.g., communication, technical contribution, leadership).
+* **Secure Authentication:** User registration, login, and robust password management (reset/update) for a secure environment.
+* **Real-time Progress Tracking:** Instructors can view which assignments are complete and which students still need to submit their feedback.
+* **Automated Reporting:** Calculation of aggregated peer scores and generation of detailed, downloadable PDF feedback reports for individual team members.
+* **Team Management:** Features for inviting, assigning, and tracking members within project teams.
 
-## 🧑‍💻 Development Team (jaljira)
+## 🚀 Tech Stack
 
-- [@Rogue-05](https://github.com/Rogue-05) - Scrum Master
-- [@Rohan-756](https://github.com/Rohan-756) - Developer Team
-- [@RishabhJawagal](https://github.com/RishabhJawagal) - Developer Team
-- [@NikhileshVIyer](https://github.com/NikhileshVIyer) - Developer Team
+This project is built using a modern, scalable technology stack:
 
-## 👨‍🏫 Teaching Assistant
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend** | **Next.js** (React) | Full-featured frontend development, handling routing and server-side rendering. |
+| **Styling** | **Tailwind CSS** | Utility-first CSS framework for rapid and responsive UI development. |
+| **Backend** | **Next.js API Routes** | Used for creating a robust and efficient serverless API layer. |
+| **Database** | **Prisma** | Next-generation ORM for simplified database access (Schema files detected). |
+| **Testing** | **Jest** / **Supertest** | Comprehensive unit and integration tests for API endpoints. |
+| **Language** | **TypeScript** | Enhances code quality and maintainability across the entire stack. |
 
-- [@Amrutha-PES](https://github.com/Amrutha-PES)
-- [@VenomBlood1207](https://github.com/VenomBlood1207)
-
-## 👨‍⚖️ Faculty Supervisor
-
-- [@Arpitha035](https://github.com/Arpitha035)
-
-
-## 🚀 Getting Started
+## 🛠️ Getting Started
 
 ### Prerequisites
-- [List your prerequisites here]
+
+You will need the following installed on your machine:
+
+* Node.js (v18+)
+* npm or yarn
+* A running PostgreSQL database instance (or equivalent supported by Prisma)
 
 ### Installation
-1. Clone the repository
-   ```bash
-   git clone https://github.com/pestechnology/PESU_RR_AIML_D_P45_Online_Peer_Evaluation_Tool_jaljira.git
-   cd PESU_RR_AIML_D_P45_Online_Peer_Evaluation_Tool_jaljira
-   ```
 
-2. Install dependencies
-   ```bash
-   # Add your installation commands here
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone [Your Repository URL Here]
+    cd PeerEval
+    ```
 
-3. Run the application
-   ```bash
-   # Add your run commands here
-   ```
+2.  **Navigate to the application folder and install dependencies:**
+    ```bash
+    cd my-app
+    npm install
+    ```
 
-## 📁 Project Structure
+3.  **Configure Environment Variables:**
+    Create a `.env.local` file in the `my-app` directory and add your database connection string and other secrets (e.g., `DATABASE_URL`, JWT secrets, etc.) based on your application needs.
 
-```
-PESU_RR_AIML_D_P45_Online_Peer_Evaluation_Tool_jaljira/
-├── src/                 # Source code
-├── docs/               # Documentation
-├── tests/              # Test files
-├── .github/            # GitHub workflows and templates
-├── README.md          # This file
-└── ...
-```
+4.  **Setup Database:**
+    Run Prisma migrations to create the necessary tables defined in `prisma/schema.prisma`.
+    ```bash
+    npx prisma migrate dev --name init
+    ```
 
-## 🛠️ Development Guidelines
-
-### Branching Strategy
-- `main`: Production-ready code
-- `develop`: Development branch
-- `feature/*`: Feature branches
-- `bugfix/*`: Bug fix branches
-
-### Commit Messages
-Follow conventional commit format:
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation changes
-- `style:` Code style changes
-- `refactor:` Code refactoring
-- `test:` Test-related changes
-
-### Code Review Process
-1. Create feature branch from `develop`
-2. Make changes and commit
-3. Create Pull Request to `develop`
-4. Request review from team members
-5. Merge after approval
-
-## 📚 Documentation
-
-- [API Documentation](docs/api.md)
-- [User Guide](docs/user-guide.md)
-- [Developer Guide](docs/developer-guide.md)
+5.  **Run the application:**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🧪 Testing
 
+The project includes comprehensive test suites for the API logic.
+
 ```bash
-# Run tests
+# Run all tests
 npm test
 
-# Run tests with coverage
+# Run tests with coverage report
 npm run test:coverage
 ```
 
-## 📄 License
+## 👥 Contributors
+This project was built in collaboration with:
 
-This project is developed for educational purposes as part of the PES University UE23CS341A curriculum.
+[@Rohan-756] (Developer)
 
----
+[@Rogue-05] (Developer)
 
-**Course:** UE23CS341A  
-**Institution:** PES University  
-**Academic Year:** 2025  
-**Semester:** 5th Sem
+[@RishabhJawagal] (Developer)
+
+[@NikhileshVIyer] (Developer)
+
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
